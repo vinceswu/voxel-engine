@@ -1,5 +1,5 @@
 <h1 align="center">Voxel Engine</h1>
-<p align="center"><em>Dogfood Voxel Engine written in Olive.</em></p>
+<p align="center"><em>Dogfood Voxel Engine written in Olive</em></p>
 
 <div align="center">
 
