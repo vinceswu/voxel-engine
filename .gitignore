@@ -1,0 +1,5 @@
+.env
+.env.*
+*.secret
+grove/
+__pycache__

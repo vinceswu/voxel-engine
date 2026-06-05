@@ -1,0 +1,110 @@
+from shader_program import ShaderProgram
+from settings import WIN_RES, FPS
+from camera import Camera
+from player import Player
+from scene import Scene
+from textures import load_texture
+
+import py "glm" as glm
+import py "moderngl" as mgl
+import py "pygame" as pg
+import py "sys" as sys
+
+struct VoxelEngine:
+    ctx: PyObject
+    clock: PyObject
+    delta_time: f64
+    time: f64
+    is_running: bool
+    screenshot_requested: bool
+    texture_0: PyObject
+    texture_1: PyObject
+    texture_array_0: PyObject
+    player_camera: Camera
+    player: Player
+    shader_program: ShaderProgram
+    scene: Scene
+
+impl VoxelEngine:
+    fn __init__(mut self):
+        pg.init()
+        pg.display.gl_set_attribute(pg.GL_CONTEXT_MAJOR_VERSION, 3)
+        pg.display.gl_set_attribute(pg.GL_CONTEXT_MINOR_VERSION, 3)
+        pg.display.gl_set_attribute(pg.GL_CONTEXT_PROFILE_MASK, pg.GL_CONTEXT_PROFILE_CORE)
+        pg.display.gl_set_attribute(pg.GL_DEPTH_SIZE, 24)
+
+        pg.display.set_mode(WIN_RES, flags=pg.OPENGL | pg.DOUBLEBUF)
+        self.ctx = mgl.create_context()
+
+        self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE | mgl.BLEND)
+        self.ctx.gc_mode = 'auto'
+
+        self.clock = pg.time.Clock()
+        self.delta_time = 0.0
+        self.time = 0.0
+        self.is_running = True
+        self.screenshot_requested = False
+
+        pg.event.set_grab(True)
+        pg.mouse.set_visible(False)
+
+        self.texture_0 = load_texture(self.ctx, 'frame.png', False)
+        self.texture_1 = load_texture(self.ctx, 'water.png', False)
+        self.texture_array_0 = load_texture(self.ctx, 'tex_array_0.png', True)
+
+        self.texture_0.use(location=0)
+        self.texture_array_0.use(location=1)
+        self.texture_1.use(location=2)
+
+        self.player_camera = Camera(PLAYER_POS, -45.0, -25.0)
+        self.player = Player(&mut self, &mut self.player_camera)
+        self.shader_program = ShaderProgram(&mut self)
+        self.scene = Scene(&mut self)
+
+    fn update(self: &mut VoxelEngine):
+        self.delta_time = self.clock.tick(FPS)
+        self.player.update(self.delta_time as float)
+        self.shader_program.update()
+        self.scene.update()
+        self.time = (pg.time.get_ticks() as float) * 0.001
+        pg.display.set_caption(f'{self.clock.get_fps()}')
+
+    fn render(self: &mut VoxelEngine):
+        self.ctx.clear(0.58, 0.83, 0.99, 1.0, 1.0)
+        self.scene.render()
+        if self.screenshot_requested:
+            self.save_screenshot()
+            self.screenshot_requested = False
+        pg.display.flip()
+
+    fn handle_events(self: &mut VoxelEngine):
+        for event in pg.event.get():
+            if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
+                self.is_running = False
+            if event.type == pg.KEYDOWN and event.key == pg.K_F12:
+                self.screenshot_requested = True
+            self.player.handle_event(event)
+
+    fn save_screenshot(self: &mut VoxelEngine):
+        let surf = pg.display.get_surface()
+        let width = surf.get_width()
+        let height = surf.get_height()
+        let pixels = self.ctx.screen.read(viewport=(0, 0, width, height), alignment=1)
+        import py "PIL.Image" as Image
+        let image = Image.frombytes('RGB', (width, height), pixels)
+        let image = image.transpose(Image.FLIP_TOP_BOTTOM)
+        image.save('screenshot.png')
+        sys.stdout.write("Screenshot saved.\n"); sys.stdout.flush()
+
+    fn run(self: &mut VoxelEngine):
+        while self.is_running:
+            self.handle_events()
+            self.update()
+            self.render()
+
+        pg.quit()
+        sys.exit()
+
+fn main():
+    let mut app = VoxelEngine()
+    app.run()

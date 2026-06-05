@@ -1,0 +1,33 @@
+from meshes.cube_mesh import CubeMesh
+
+import py "glm" as glm
+
+struct VoxelMarker:
+    app: &mut VoxelEngine
+    handler: &mut VoxelHandler
+    position: PyObject
+    m_model: PyObject
+    mesh: CubeMesh
+
+impl VoxelMarker:
+    fn __init__(self, voxel_handler: &mut VoxelHandler):
+        self.app = voxel_handler.app
+        self.handler = voxel_handler
+        self.position = glm.vec3(0)
+        self.m_model = self.get_model_matrix()
+        self.mesh = CubeMesh(self.app)
+
+    fn update(self: &mut VoxelMarker):
+        if self.handler.voxel_id != 0:
+            self.position = self.handler.voxel_world_pos
+
+    fn set_uniform(self: &mut VoxelMarker):
+        self.mesh.base.program['m_model'].write(self.get_model_matrix())
+
+    fn get_model_matrix(self: &VoxelMarker) -> PyObject:
+        glm.translate(glm.mat4(), glm.vec3(self.position))
+
+    fn render(self: &mut VoxelMarker):
+        if self.handler.voxel_id != 0:
+            self.set_uniform()
+            self.mesh.render()

@@ -1,0 +1,29 @@
+from meshes.base_mesh import BaseMesh
+
+import py "numpy" as np
+
+struct QuadMesh:
+    base: BaseMesh
+
+impl QuadMesh:
+    fn __init__(self, app: &mut VoxelEngine):
+        let ctx = app.ctx
+        let program = app.shader_program.water
+        let vertex_data = self.get_vertex_data()
+        self.base = BaseMesh(ctx, program, '2u1 3u1', vertex_data, 'in_tex_coord', 'in_position')
+
+    fn get_vertex_data(self: &QuadMesh) -> PyObject:
+        let vertices = np.array([
+            (0, 0, 0), (1, 0, 1), (1, 0, 0),
+            (0, 0, 0), (0, 0, 1), (1, 0, 1)
+        ], dtype='uint8')
+
+        let tex_coords = np.array([
+            (0, 0), (1, 1), (1, 0),
+            (0, 0), (0, 1), (1, 1)
+        ], dtype='uint8')
+
+        np.hstack([tex_coords, vertices])
+
+    fn render(self: &QuadMesh):
+        self.base.render()

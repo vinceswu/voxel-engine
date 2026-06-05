@@ -1,0 +1,146 @@
+from settings import *
+from world_objects.chunk import Chunk
+import py "glm" as glm
+
+struct VoxelHandler:
+    app: &mut VoxelEngine
+    chunks: &mut [Chunk]
+    chunk_index: int
+    voxel_id: int
+    voxel_index: int
+    voxel_local_pos: Any
+    voxel_world_pos: PyObject
+    voxel_normal: PyObject
+
+impl VoxelHandler:
+    fn __init__(self, app: &mut VoxelEngine, chunks: &mut [Chunk]):
+        self.app = app
+        self.chunks = chunks
+        self.chunk_index = 0
+        self.voxel_id = 0
+        self.voxel_index = 0
+        self.voxel_local_pos = None
+        self.voxel_world_pos = glm.ivec3(0)
+        self.voxel_normal = glm.ivec3(0)
+
+    fn update(self: &mut VoxelHandler):
+        self.ray_cast()
+
+    fn ray_cast(self: &mut VoxelHandler) -> bool:
+        let cam_pos = self.app.player.camera.position
+        let forward = self.app.player.camera.forward
+        let end_pos = cam_pos + forward * (MAX_RAY_DIST as float)
+
+        let x1 = cam_pos[0] as float
+        let y1 = cam_pos[1] as float
+        let z1 = cam_pos[2] as float
+
+        let x2 = end_pos[0] as float
+        let y2 = end_pos[1] as float
+        let z2 = end_pos[2] as float
+
+        let mut current_voxel_pos = glm.ivec3(int(x1), int(y1), int(z1))
+        self.voxel_id = 0
+        self.voxel_normal = glm.ivec3(0)
+        let mut step_dir = -1
+
+        let dx = glm.sign(x2 - x1)
+        let mut delta_x: float = 0.0
+        if dx != 0:
+            delta_x = min(dx / (x2 - x1), 10000000.0)
+        else:
+            delta_x = 10000000.0
+        let mut max_x: float = 0.0
+        if dx > 0:
+            max_x = delta_x * (1.0 - glm.fract(x1))
+        else:
+            max_x = delta_x * glm.fract(x1)
+
+        let dy = glm.sign(y2 - y1)
+        let mut delta_y: float = 0.0
+        if dy != 0:
+            delta_y = min(dy / (y2 - y1), 10000000.0)
+        else:
+            delta_y = 10000000.0
+        let mut max_y: float = 0.0
+        if dy > 0:
+            max_y = delta_y * (1.0 - glm.fract(y1))
+        else:
+            max_y = delta_y * glm.fract(y1)
+
+        let dz = glm.sign(z2 - z1)
+        let mut delta_z: float = 0.0
+        if dz != 0:
+            delta_z = min(dz / (z2 - z1), 10000000.0)
+        else:
+            delta_z = 10000000.0
+        let mut max_z: float = 0.0
+        if dz > 0:
+            max_z = delta_z * (1.0 - glm.fract(z1))
+        else:
+            max_z = delta_z * glm.fract(z1)
+
+        let mut iters = 0
+        while not (max_x > 1.0 and max_y > 1.0 and max_z > 1.0):
+            iters = iters + 1
+            if iters > 100:
+                return False
+            let result = self.get_voxel_id(current_voxel_pos)
+            if result[0] as int != 0:
+                self.voxel_id = result[0] as int
+                self.voxel_index = result[1] as int
+                self.voxel_local_pos = result[2]
+                self.chunk_index = result[3] as int
+                self.voxel_world_pos = current_voxel_pos
+                if step_dir == 0:
+                    self.voxel_normal.x = -dx
+                elif step_dir == 1:
+                    self.voxel_normal.y = -dy
+                else:
+                    self.voxel_normal.z = -dz
+                return True
+
+            if max_x < max_y:
+                if max_x < max_z:
+                    current_voxel_pos.x = current_voxel_pos.x + dx
+                    max_x = max_x + delta_x
+                    step_dir = 0
+                else:
+                    current_voxel_pos.z = current_voxel_pos.z + dz
+                    max_z = max_z + delta_z
+                    step_dir = 2
+            else:
+                if max_y < max_z:
+                    current_voxel_pos.y = current_voxel_pos.y + dy
+                    max_y = max_y + delta_y
+                    step_dir = 1
+                else:
+                    current_voxel_pos.z = current_voxel_pos.z + dz
+                    max_z = max_z + delta_z
+                    step_dir = 2
+
+        False
+
+    fn get_voxel_id(self: &VoxelHandler, voxel_world_pos: PyObject) -> (Any, Any, Any, Any):
+        let wx = voxel_world_pos[0] as int
+        let wy = voxel_world_pos[1] as int
+        let wz = voxel_world_pos[2] as int
+
+        let cx = wx / (CHUNK_SIZE as int)
+        let cy = wy / (CHUNK_SIZE as int)
+        let cz = wz / (CHUNK_SIZE as int)
+
+        if 0 <= cx and cx < (WORLD_W as int) and 0 <= cy and cy < (WORLD_H as int) and 0 <= cz and cz < (WORLD_D as int):
+            let chunk_index = cx + (WORLD_W as int) * cz + (WORLD_AREA as int) * cy
+            let chunk = &self.chunks[chunk_index]
+
+            let lx = wx - cx * (CHUNK_SIZE as int)
+            let ly = wy - cy * (CHUNK_SIZE as int)
+            let lz = wz - cz * (CHUNK_SIZE as int)
+
+            let voxel_index = lx + (CHUNK_SIZE as int) * lz + (CHUNK_AREA as int) * ly
+            let voxel_id = chunk.voxels[voxel_index] as int
+
+            return (voxel_id, voxel_index, (lx, ly, lz), chunk_index)
+
+        (0, 0, (0, 0, 0), 0)

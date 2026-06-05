@@ -1,0 +1,92 @@
+from settings import *
+from camera import Camera
+
+import py "pygame" as pg
+import py "operator" as op
+
+struct Player:
+    app: &mut VoxelEngine
+    camera: &mut Camera
+    w_down: bool
+    s_down: bool
+    a_down: bool
+    d_down: bool
+    shift_down: bool
+    space_down: bool
+    ctrl_down: bool
+
+impl Player:
+    fn __init__(self, app: &mut VoxelEngine, camera: &mut Camera):
+        self.app = app
+        self.camera = camera
+        self.w_down = False
+        self.s_down = False
+        self.a_down = False
+        self.d_down = False
+        self.shift_down = False
+        self.space_down = False
+        self.ctrl_down = False
+
+    fn update(self: &mut Player, dt: PyObject):
+        self.keyboard_control(dt)
+        self.mouse_control()
+        self.camera.update()
+
+    fn handle_event(self: &mut Player, event: PyObject):
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_w:
+                self.w_down = True
+            if event.key == pg.K_s:
+                self.s_down = True
+            if event.key == pg.K_a:
+                self.a_down = True
+            if event.key == pg.K_d:
+                self.d_down = True
+            if event.key == pg.K_LSHIFT:
+                self.shift_down = True
+            if event.key == pg.K_SPACE:
+                self.space_down = True
+            if event.key == pg.K_LCTRL:
+                self.ctrl_down = True
+
+        if event.type == pg.KEYUP:
+            if event.key == pg.K_w:
+                self.w_down = False
+            if event.key == pg.K_s:
+                self.s_down = False
+            if event.key == pg.K_a:
+                self.a_down = False
+            if event.key == pg.K_d:
+                self.d_down = False
+            if event.key == pg.K_LSHIFT:
+                self.shift_down = False
+            if event.key == pg.K_SPACE:
+                self.space_down = False
+            if event.key == pg.K_LCTRL:
+                self.ctrl_down = False
+
+    fn mouse_control(self: &mut Player):
+        let rel = pg.mouse.get_rel()
+        let dx = (rel[0] as float) as f64
+        let dy = (rel[1] as float) as f64
+        let sensitivity = (MOUSE_SENSITIVITY as float) as f64
+        self.camera.rotate_yaw(dx * sensitivity)
+        self.camera.rotate_pitch(dy * sensitivity)
+
+    fn keyboard_control(self: &mut Player, dt: PyObject):
+        let vel = op.mul(PLAYER_SPEED as float, dt)
+        let mut move_vel = vel
+        if self.shift_down:
+            move_vel = op.mul(vel, 3.0 as float)
+        if self.w_down:
+            self.camera.position = op.add(self.camera.position, op.mul(self.camera.forward, move_vel))
+        if self.s_down:
+            self.camera.position = op.sub(self.camera.position, op.mul(self.camera.forward, move_vel))
+        if self.d_down:
+            self.camera.position = op.add(self.camera.position, op.mul(self.camera.right, move_vel))
+        if self.a_down:
+            self.camera.position = op.sub(self.camera.position, op.mul(self.camera.right, move_vel))
+        if self.space_down:
+            self.camera.position = op.add(self.camera.position, op.mul(self.camera.up, move_vel))
+        if self.ctrl_down:
+            self.camera.position = op.sub(self.camera.position, op.mul(self.camera.up, move_vel))

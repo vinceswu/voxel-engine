@@ -1,0 +1,31 @@
+from meshes.base_mesh import BaseMesh
+
+import py "src.build_chunk_mesh" as bm_module
+
+struct ChunkMesh:
+    base: BaseMesh
+    chunk_voxels: PyObject
+    world_voxels: PyObject
+    chunk_pos: (int, int, int)
+
+impl ChunkMesh:
+    fn __init__(self, chunk: &mut Chunk):
+        let ctx = chunk.app.ctx
+        let program = chunk.app.shader_program.chunk
+        let p0 = chunk.position[0]
+        let p1 = chunk.position[1]
+        let p2 = chunk.position[2]
+        let chunk_voxels = bm_module.fetch_voxels(p0, p1, p2)
+        let world_voxels = chunk.world_voxels
+        let vertex_data = bm_module.build_chunk_mesh(chunk_voxels, 1, (p0, p1, p2), world_voxels)
+        self.chunk_voxels = chunk_voxels
+        self.world_voxels = world_voxels
+        self.chunk_pos = (p0, p1, p2)
+        self.base = BaseMesh(ctx, program, '1u4', vertex_data, 'packed_data', '')
+
+    fn rebuild(self: &mut ChunkMesh):
+        let vertex_data = bm_module.build_chunk_mesh(self.chunk_voxels, 1, self.chunk_pos, self.world_voxels)
+        self.base.rebuild(vertex_data)
+
+    fn render(self: &ChunkMesh):
+        self.base.render()

@@ -1,0 +1,32 @@
+from world import World
+from world_objects.clouds import Clouds
+from world_objects.water import Water
+from world_objects.voxel_marker import VoxelMarker
+
+import py "moderngl" as mgl
+
+struct Scene:
+    world: World
+    clouds: Clouds
+    water: Water
+    voxel_marker: VoxelMarker
+
+impl Scene:
+    fn __init__(self, app: &mut VoxelEngine):
+        self.world = World(app)
+        self.clouds = Clouds(app, &self.world.noise)
+        self.water = Water(app)
+        self.voxel_marker = VoxelMarker(&mut self.world.voxel_handler)
+
+    fn update(self: &mut Scene):
+        self.world.update()
+        self.voxel_marker.update()
+        self.clouds.update()
+
+    fn render(self: &mut Scene):
+        self.world.render()
+        self.water.app.ctx.disable(mgl.CULL_FACE)
+        self.clouds.render()
+        self.water.render()
+        self.water.app.ctx.enable(mgl.CULL_FACE)
+        self.voxel_marker.render()

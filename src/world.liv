@@ -1,0 +1,84 @@
+from settings import *
+from world_objects.chunk import Chunk
+from voxel_handler import VoxelHandler
+from noise import NoiseState, noise_init
+
+import py "numpy" as np
+import py "sys" as sys
+import py "glm" as glm
+import py "src.build_chunk_mesh" as _bm
+
+struct World:
+    app: &mut VoxelEngine
+    chunks: [Chunk]
+    vaos: PyObject
+    models: PyObject
+    chunk_program: PyObject
+    voxels: PyObject
+    voxel_handler: VoxelHandler
+    noise: NoiseState
+
+impl World:
+    fn __init__(self, app: &mut VoxelEngine):
+        self.app = app
+        self.noise = noise_init(SEED as int)
+        let mut chunks: [Chunk] = list_new(WORLD_VOL as int)
+        self.chunks = chunks
+        self.vaos = list_new(WORLD_VOL as int)
+        self.models = list_new(WORLD_VOL as int)
+        self.chunk_program = app.shader_program.chunk
+        self.voxels = np.empty([WORLD_VOL as int, CHUNK_VOL as int], dtype='int32')
+        self.build_chunks()
+        self.voxel_handler = VoxelHandler(app, &mut self.chunks)
+
+    fn update(self: &mut World):
+        self.voxel_handler.update()
+
+    fn build_chunks(self: &mut World):
+        let mut x = 0
+        while x < (WORLD_W as int):
+            let mut y = 0
+            while y < (WORLD_H as int):
+                let mut z = 0
+                while z < (WORLD_D as int):
+                    let chunk_index = x + (WORLD_W as int) * z + (WORLD_AREA as int) * y
+                    let mut chunk = Chunk(self.app, self.voxels, (x, y, z))
+                    self.voxels[chunk_index] = chunk.build_voxels(&self.noise)
+                    self.chunks[chunk_index] = chunk
+                    pg.event.pump()
+                    z = z + 1
+                y = y + 1
+            x = x + 1
+        let mut built = 0
+        x = 0
+        while x < (WORLD_W as int):
+            let mut y = 0
+            while y < (WORLD_H as int):
+                let mut z = 0
+                while z < (WORLD_D as int):
+                    let chunk_index = x + (WORLD_W as int) * z + (WORLD_AREA as int) * y
+                    let chunk_ref = &mut self.chunks[chunk_index]
+                    if chunk_ref.is_empty == False:
+                        chunk_ref.build_mesh()
+                        self.vaos[chunk_index] = chunk_ref.mesh.base.vao
+                        built = built + 1
+                    pg.event.pump()
+                    z = z + 1
+                y = y + 1
+            x = x + 1
+
+    fn render(self: &World):
+        let world_w = WORLD_W as int
+        let world_area = WORLD_AREA as int
+        let chunk_sz = CHUNK_SIZE as float
+        let prog = self.app.shader_program.chunk
+        let mut i = 0
+        while i < len(self.vaos):
+            let vao = self.vaos[i]
+            if vao != None:
+                let cx = i % world_w
+                let cz = (i / world_w) % world_w
+                let cy = i / world_area
+                let m_model = glm.translate(glm.mat4(), glm.vec3(cx as float, cy as float, cz as float) * chunk_sz)
+                _bm.render_chunk(vao, prog, m_model)
+            i = i + 1

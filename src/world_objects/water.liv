@@ -1,0 +1,13 @@
+from meshes.quad_mesh import QuadMesh
+
+struct Water:
+    app: &mut VoxelEngine
+    mesh: QuadMesh
+
+impl Water:
+    fn __init__(self, app: &mut VoxelEngine):
+        self.app = app
+        self.mesh = QuadMesh(app)
+
+    fn render(self: &Water):
+        self.mesh.render()

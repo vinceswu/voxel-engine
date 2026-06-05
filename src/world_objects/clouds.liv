@@ -1,0 +1,17 @@
+from meshes.cloud_mesh import CloudMesh
+from noise import NoiseState
+
+struct Clouds:
+    app: &mut VoxelEngine
+    mesh: CloudMesh
+
+impl Clouds:
+    fn __init__(self, app: &mut VoxelEngine, noise: &NoiseState):
+        self.app = app
+        self.mesh = CloudMesh(app, noise)
+
+    fn update(self: &mut Clouds):
+        self.mesh.base.program['u_time'] = self.app.time
+
+    fn render(self: &Clouds):
+        self.mesh.base.render()

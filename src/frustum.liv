@@ -1,0 +1,36 @@
+from settings import *
+
+import py "glm" as glm
+import math
+
+struct Frustum:
+    factor_y: f64
+    tan_y: f64
+    factor_x: f64
+    tan_x: f64
+
+impl Frustum:
+    fn __init__(self):
+        let half_y = (V_FOV as float) * 0.5
+        self.factor_y = 1.0 / math.cos(half_y)
+        self.tan_y = math.tan(half_y)
+        let half_x = (H_FOV as float) * 0.5
+        self.factor_x = 1.0 / math.cos(half_x)
+        self.tan_x = math.tan(half_x)
+
+    fn is_on_frustum(self: &Frustum, chunk_center: PyObject, cam_pos: PyObject, cam_forward: PyObject, cam_up: PyObject, cam_right: PyObject) -> bool:
+        let sz = glm.dot(chunk_center - cam_pos, cam_forward) as float
+        if not ((NEAR as float) - (CHUNK_SPHERE_RADIUS as float) <= sz and sz <= (FAR as float) + (CHUNK_SPHERE_RADIUS as float)):
+            return False
+
+        let sy = glm.dot(chunk_center - cam_pos, cam_up) as float
+        let dist_y = (self.factor_y * (CHUNK_SPHERE_RADIUS as float) + sz * (self.tan_y as float)) as float
+        if not (-dist_y <= sy and sy <= dist_y):
+            return False
+
+        let sx = glm.dot(chunk_center - cam_pos, cam_right) as float
+        let dist_x = (self.factor_x * (CHUNK_SPHERE_RADIUS as float) + sz * (self.tan_x as float)) as float
+        if not (-dist_x <= sx and sx <= dist_x):
+            return False
+
+        True

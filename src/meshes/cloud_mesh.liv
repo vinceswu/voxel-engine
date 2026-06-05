@@ -1,0 +1,20 @@
+from settings import *
+from meshes.base_mesh import BaseMesh
+from noise import NoiseState
+
+struct CloudMesh:
+    base: BaseMesh
+
+impl CloudMesh:
+    fn __init__(self, app: &mut VoxelEngine, noise: &NoiseState):
+        let ctx = app.ctx
+        let program = app.shader_program.clouds
+        let vertex_data = self.get_vertex_data(noise)
+        self.base = BaseMesh(ctx, program, '3u2', vertex_data, 'in_position', '')
+
+    fn get_vertex_data(self: &CloudMesh, noise: &NoiseState) -> PyObject:
+        import py "src.build_chunk_mesh" as _cloud_bm
+        let width = (WORLD_W as int) * (CHUNK_SIZE as int)
+        let depth = (WORLD_D as int) * (CHUNK_SIZE as int)
+        let cloud_data = _cloud_bm.gen_cloud_data(noise.perm, noise.grad2, width, depth, 0.13, 0.2)
+        _cloud_bm.build_cloud_mesh(cloud_data, width, depth, CLOUD_HEIGHT as int)

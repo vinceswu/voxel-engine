@@ -1,0 +1,33 @@
+struct BaseMesh:
+    ctx: PyObject
+    program: PyObject
+    vbo_format: str
+    attr1: str
+    attr2: str
+    vao: PyObject
+    vbo: PyObject
+
+impl BaseMesh:
+    fn __init__(self, ctx: PyObject, program: PyObject, vbo_format: str, vertex_data: PyObject, attr1: str, attr2: str):
+        self.ctx = ctx
+        self.program = program
+        self.vbo_format = vbo_format
+        self.attr1 = attr1
+        self.attr2 = attr2
+        self.vbo = self.ctx.buffer(vertex_data)
+        import py "src.build_chunk_mesh" as _bm
+        if attr2 != '':
+            self.vao = _bm.create_vao2(self.ctx, self.program, self.vbo, self.vbo_format, self.attr1, self.attr2)
+        else:
+            self.vao = _bm.create_vao(self.ctx, self.program, self.vbo, self.vbo_format, self.attr1)
+
+    fn rebuild(self: &mut BaseMesh, vertex_data: PyObject):
+        self.vbo = self.ctx.buffer(vertex_data)
+        import py "src.build_chunk_mesh" as _bm
+        if self.attr2 != '':
+            self.vao = _bm.create_vao2(self.ctx, self.program, self.vbo, self.vbo_format, self.attr1, self.attr2)
+        else:
+            self.vao = _bm.create_vao(self.ctx, self.program, self.vbo, self.vbo_format, self.attr1)
+
+    fn render(self: &BaseMesh):
+        self.vao.render()

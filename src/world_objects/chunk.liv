@@ -1,0 +1,77 @@
+from settings import *
+from meshes.chunk_mesh import ChunkMesh
+from terrain_gen import set_voxel_id, get_height
+from noise import NoiseState
+
+import py "glm" as glm
+import py "numpy" as np
+import py "src.build_chunk_mesh" as bm_store
+
+struct Chunk:
+    app: &mut VoxelEngine
+    world_voxels: PyObject
+    position: (int, int, int)
+    m_model: PyObject
+    voxels: PyObject
+    mesh: ChunkMesh
+    is_empty: bool
+    center: PyObject
+
+impl Chunk:
+    fn __init__(self, app: &mut VoxelEngine, world_voxels: PyObject, position: (int, int, int)):
+        self.app = app
+        self.world_voxels = world_voxels
+        self.position = position
+        self.m_model = self.get_model_matrix()
+        self.voxels = None
+        self.mesh = None
+        self.is_empty = True
+        let px = position[0] as float
+        let py_f = position[1] as float
+        let pz = position[2] as float
+        self.center = (glm.vec3(px, py_f, pz) + 0.5) * (CHUNK_SIZE as float)
+
+    fn get_model_matrix(self: &Chunk) -> PyObject:
+        let px = self.position[0] as float
+        let py_f = self.position[1] as float
+        let pz = self.position[2] as float
+        glm.translate(glm.mat4(), glm.vec3(px, py_f, pz) * (CHUNK_SIZE as float))
+
+    fn set_uniform(self: &Chunk):
+        self.mesh.base.program['m_model'].write(self.m_model)
+
+    fn build_mesh(self: &mut Chunk):
+        self.mesh = ChunkMesh(self)
+
+    fn render(self: &Chunk):
+        if self.mesh != None:
+            self.set_uniform()
+            self.mesh.render()
+
+    fn build_voxels(self: &mut Chunk, noise: &NoiseState) -> PyObject:
+        let voxels = np.zeros(CHUNK_VOL as int, dtype='int32')
+        let cx = self.position[0] * (CHUNK_SIZE as int)
+        let cy = self.position[1] * (CHUNK_SIZE as int)
+        let cz = self.position[2] * (CHUNK_SIZE as int)
+        self.generate_terrain(noise, voxels, cx, cy, cz)
+        if np.count_nonzero(voxels) != 0:
+            self.is_empty = False
+        bm_store.store_voxels(self.position[0], self.position[1], self.position[2], voxels)
+        voxels
+
+    fn generate_terrain(self: &Chunk, noise: &NoiseState, voxels: PyObject, cx: int, cy: int, cz: int):
+        let mut x = 0
+        while x < (CHUNK_SIZE as int):
+            let wx = x + cx
+            let mut z = 0
+            while z < (CHUNK_SIZE as int):
+                let wz = z + cz
+                let world_height = get_height(noise, wx, wz)
+                let local_height = min(world_height - cy, CHUNK_SIZE as int)
+                let mut y = 0
+                while y < local_height:
+                    let wy = y + cy
+                    set_voxel_id(noise, voxels, x, y, z, wx, wy, wz, world_height)
+                    y = y + 1
+                z = z + 1
+            x = x + 1

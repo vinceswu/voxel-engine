@@ -1,0 +1,70 @@
+import py "glm" as glm
+import math
+import random
+
+const MAJOR_VER: u8 = 3
+const MINOR_VER: u8 = 3
+const DEPTH_SIZE: u8 = 24
+const NUM_SAMPLES: u8 = 1
+
+const WIN_RES = glm.vec2(1920, 1080)
+const FPS: u8 = 120
+
+const SEED: u16 = random.randint(min=1, max=9999) as u16
+
+const MAX_RAY_DIST: u8 = 6
+
+const CHUNK_SIZE: u8 = 48
+const H_CHUNK_SIZE: u8 = CHUNK_SIZE / 2
+const CHUNK_AREA: u16 = (CHUNK_SIZE as u16) * (CHUNK_SIZE as u16)
+const CHUNK_VOL: u32 = (CHUNK_AREA as u32) * (CHUNK_SIZE as u32)
+const CHUNK_SPHERE_RADIUS: f32 = ((H_CHUNK_SIZE as float) * math.sqrt(3.0)) as f32
+
+const WORLD_W: u8 = 20
+const WORLD_H: u8 = 2
+const WORLD_D: u8 = WORLD_W
+const WORLD_AREA: u16 = (WORLD_W as u16) * (WORLD_D as u16)
+const WORLD_VOL: u16 = WORLD_AREA * (WORLD_H as u16)
+
+const CENTER_XZ: u16 = (WORLD_W as u16) * (H_CHUNK_SIZE as u16)
+const CENTER_Y: u8 = WORLD_H * H_CHUNK_SIZE
+
+const ASPECT_RATIO: f32 = (WIN_RES.x as f32) / (WIN_RES.y as f32)
+const FOV_DEG: f32 = 50.0
+const V_FOV: f32 = glm.radians(FOV_DEG as float) as f32
+const H_FOV: f32 = (2.0 * math.atan(math.tan((V_FOV as float) * 0.5) * (ASPECT_RATIO as float))) as f32
+const NEAR: f32 = 0.1
+const FAR: f32 = 2000.0
+const PITCH_MAX: f32 = glm.radians(90.0) as f32
+
+const PLAYER_SPEED: f32 = 1.0
+const PLAYER_ROT_SPEED: f32 = 0.003
+const PLAYER_POS = glm.vec3(CENTER_XZ as int, CHUNK_SIZE as int * 3, CENTER_XZ as int)
+const MOUSE_SENSITIVITY: f32 = 0.001
+
+const BG_COLOR = glm.vec3(0.58, 0.83, 0.99)
+
+const SAND: u8 = 1
+const GRASS: u8 = 2
+const DIRT: u8 = 3
+const STONE: u8 = 4
+const SNOW: u8 = 5
+const LEAVES: u8 = 6
+const WOOD: u8 = 7
+
+const SNOW_LVL: u8 = 54
+const STONE_LVL: u8 = 49
+const DIRT_LVL: u8 = 40
+const GRASS_LVL: u8 = 8
+const SAND_LVL: u8 = 7
+
+const TREE_PROBABILITY: f32 = 0.02
+const TREE_WIDTH: u8 = 4
+const TREE_HEIGHT: u8 = 8
+const TREE_H_WIDTH, TREE_H_HEIGHT: u8 = TREE_WIDTH / 2, TREE_HEIGHT / 2
+
+const WATER_LINE: f32 = 5.6
+const WATER_AREA: u16 = 5 * (CHUNK_SIZE as u16) * (WORLD_W as u16)
+
+const CLOUD_SCALE: u8 = 25
+const CLOUD_HEIGHT: u8 = WORLD_H * CHUNK_SIZE * 2

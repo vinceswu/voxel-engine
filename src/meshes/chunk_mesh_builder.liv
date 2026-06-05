@@ -1,0 +1,13 @@
+from settings import *
+
+import py "src.build_chunk_mesh" as py_builder
+
+let build_chunk_mesh = py_builder.build_chunk_mesh
+
+fn get_chunk_index(position: (int, int, int)) -> int:
+    let cx = position[0] / (CHUNK_SIZE as int)
+    let cy = position[1] / (CHUNK_SIZE as int)
+    let cz = position[2] / (CHUNK_SIZE as int)
+    if 0 <= cx and cx < (WORLD_W as int) and 0 <= cy and cy < (WORLD_H as int) and 0 <= cz and cz < (WORLD_D as int):
+        return cx + (WORLD_W as int) * cz + (WORLD_AREA as int) * cy
+    -1

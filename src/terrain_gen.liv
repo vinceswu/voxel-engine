@@ -1,0 +1,103 @@
+from settings import *
+from noise import NoiseState, noise2, noise3
+
+import math
+import random
+
+fn get_height(noise: &NoiseState, x: int, z: int) -> int:
+    let cx = x as float - (CENTER_XZ as float)
+    let cz = z as float - (CENTER_XZ as float)
+    let island = 1.0 / (((0.0025 * math.hypot(cx, cz)) ** 20.0) + 0.0001)
+    let island = math.min(island, 1.0)
+
+    let a1 = CENTER_Y as float
+    let a2 = a1 * 0.5
+    let a4 = a1 * 0.25
+    let a8 = a1 * 0.125
+
+    let f1 = 0.005
+    let f2 = f1 * 2.0
+    let f4 = f1 * 4.0
+    let f8 = f1 * 8.0
+
+    let mut a1_adj = a1
+    if noise2(noise, 0.1 * x as float, 0.1 * z as float) < 0.0:
+        a1_adj = a1 / 1.07
+
+    let mut h = noise2(noise, x as float * f1, z as float * f1) * a1_adj + a1_adj
+    h = h + noise2(noise, x as float * f2, z as float * f2) * a2 - a2
+    h = h + noise2(noise, x as float * f4, z as float * f4) * a4 + a4
+    h = h + noise2(noise, x as float * f8, z as float * f8) * a8 - a8
+    h = math.max(h, noise2(noise, x as float * f8, z as float * f8) + 2.0)
+    h = h * island
+
+    int(h)
+
+fn get_index(x: int, y: int, z: int) -> int:
+    x + (CHUNK_SIZE as int) * z + (CHUNK_AREA as int) * y
+
+fn set_voxel_id(noise: &NoiseState, voxels: PyObject, x: int, y: int, z: int, wx: int, wy: int, wz: int, world_height: int):
+    let mut voxel_id: int = 0
+    if wy < world_height - 1:
+        let n3 = noise3(noise, wx as float * 0.09, wy as float * 0.09, wz as float * 0.09)
+        let n2 = noise2(noise, wx as float * 0.1, wz as float * 0.1)
+        if n3 > 0.0 and n2 * 3.0 + 3.0 < wy as float and wy as float < world_height as float - 10.0:
+            voxel_id = 0
+        else:
+            voxel_id = STONE as int
+    else:
+        let rng = int(7.0 * random.random())
+        let ry = wy - rng
+        if (SNOW_LVL as int) <= ry and ry < world_height:
+            voxel_id = SNOW as int
+        elif (STONE_LVL as int) <= ry and ry < (SNOW_LVL as int):
+            voxel_id = STONE as int
+        elif (DIRT_LVL as int) <= ry and ry < (STONE_LVL as int):
+            voxel_id = DIRT as int
+        elif (GRASS_LVL as int) <= ry and ry < (DIRT_LVL as int):
+            voxel_id = GRASS as int
+        else:
+            voxel_id = SAND as int
+
+    voxels[get_index(x, y, z)] = voxel_id
+
+    if wy < (DIRT_LVL as int):
+        place_tree(voxels, x, y, z, voxel_id)
+
+fn place_tree(voxels: PyObject, x: int, y: int, z: int, voxel_id: int):
+    if voxel_id != (GRASS as int) or random.random() > (TREE_PROBABILITY as float):
+        return
+    if y + (TREE_HEIGHT as int) >= (CHUNK_SIZE as int):
+        return
+    if x - (TREE_H_WIDTH as int) < 0 or x + (TREE_H_WIDTH as int) >= (CHUNK_SIZE as int):
+        return
+    if z - (TREE_H_WIDTH as int) < 0 or z + (TREE_H_WIDTH as int) >= (CHUNK_SIZE as int):
+        return
+
+    voxels[get_index(x, y, z)] = DIRT as int
+
+    let mut m = 0
+    let mut n = 0
+    let mut iy = TREE_H_HEIGHT as int
+    while iy < (TREE_HEIGHT as int) - 1:
+        let k = iy % 2
+        let rng = int(random.random() * 2.0)
+        let mut ix = -(TREE_H_WIDTH as int) + m
+        while ix < (TREE_H_WIDTH as int) - m * rng:
+            let mut iz = -(TREE_H_WIDTH as int) + m * rng
+            while iz < (TREE_H_WIDTH as int) - m:
+                if (ix + iz) % 4 != 0:
+                    voxels[get_index(x + ix + k, y + iy, z + iz + k)] = LEAVES as int
+                iz = iz + 1
+            ix = ix + 1
+        if n > 0:
+            m = m + 1
+        n = n + 1
+        iy = iy + 1
+
+    let mut iy = 1
+    while iy < (TREE_HEIGHT as int) - 2:
+        voxels[get_index(x, y + iy, z)] = WOOD as int
+        iy = iy + 1
+
+    voxels[get_index(x, y + (TREE_HEIGHT as int) - 2, z)] = LEAVES as int
