@@ -12,7 +12,7 @@ const FPS: u8 = 120
 
 const SEED: u16 = random.randint(min=1, max=9999) as u16
 
-const MAX_RAY_DIST: u8 = 6
+const MAX_RAY_DIST: u8 = 10
 
 const CHUNK_SIZE: u8 = 48
 const H_CHUNK_SIZE: u8 = CHUNK_SIZE / 2
@@ -37,7 +37,7 @@ const NEAR: f32 = 0.1
 const FAR: f32 = 2000.0
 const PITCH_MAX: f32 = glm.radians(90.0) as f32
 
-const PLAYER_SPEED: f32 = 0.1
+const PLAYER_SPEED: f32 = 0.05
 const PLAYER_ROT_SPEED: f32 = 0.003
 const PLAYER_POS = glm.vec3(CENTER_XZ as int, CHUNK_SIZE as int * 3, CENTER_XZ as int)
 const MOUSE_SENSITIVITY: f32 = 0.001
