@@ -13,8 +13,8 @@ impl CloudMesh:
         self.base = BaseMesh(ctx, program, '3u2', vertex_data, 'in_position', '')
 
     fn get_vertex_data(self: &CloudMesh, noise: &NoiseState) -> bytes:
-        let width = (WORLD_W as int) * (CHUNK_SIZE as int)
-        let depth = (WORLD_D as int) * (CHUNK_SIZE as int)
+        let width = CLOUD_W as int
+        let depth = CLOUD_W as int
         let scale = 0.13
         let threshold = 0.2 / 47.0
         let cy = CLOUD_HEIGHT as int

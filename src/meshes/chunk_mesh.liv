@@ -4,27 +4,17 @@ from meshes.chunk_mesh_builder import build_chunk_mesh
 struct ChunkMesh:
     base: BaseMesh
     world_voxels: &mut [bytes]
-    chunk_index: int
-    chunk_pos: (int, int, int)
 
 impl ChunkMesh:
-    fn __init__(self, chunk: &mut Chunk):
+    fn __init__(self, chunk: &mut Chunk, slots: &[int]):
         let ctx = chunk.app.ctx
         let program = chunk.app.shader_program.chunk
-        let p0 = chunk.position[0]
-        let p1 = chunk.position[1]
-        let p2 = chunk.position[2]
         self.world_voxels = chunk.world_voxels
-        self.chunk_index = chunk.chunk_index
-        self.chunk_pos = (p0, p1, p2)
-        let vertex_data = build_chunk_mesh(self.world_voxels, self.chunk_index, p0, p1, p2)
+        let vertex_data = build_chunk_mesh(self.world_voxels, slots)
         self.base = BaseMesh(ctx, program, '1u4', vertex_data, 'packed_data', '')
 
-    fn rebuild(self: &mut ChunkMesh):
-        let p0 = self.chunk_pos[0]
-        let p1 = self.chunk_pos[1]
-        let p2 = self.chunk_pos[2]
-        let vertex_data = build_chunk_mesh(self.world_voxels, self.chunk_index, p0, p1, p2)
+    fn rebuild(self: &mut ChunkMesh, slots: &[int]):
+        let vertex_data = build_chunk_mesh(self.world_voxels, slots)
         self.base.rebuild(vertex_data)
 
     fn render(self: &ChunkMesh):

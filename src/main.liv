@@ -1,5 +1,5 @@
 from shader_program import ShaderProgram
-from settings import WIN_RES, FPS, CENTER_XZ, CHUNK_SIZE, WORLD_H, EYE_HEIGHT
+from settings import WIN_RES, FPS, H_CHUNK_SIZE, CHUNK_SIZE, WORLD_H, EYE_HEIGHT
 from camera import Camera
 from player import Player
 from scene import Scene
@@ -61,11 +61,12 @@ impl VoxelEngine:
         self.shader_program = ShaderProgram(&mut self)
         self.scene = Scene(&mut self)
 
-        // Spawn standing on the terrain surface at the world center.
-        let sx = CENTER_XZ as int
+        let sx = H_CHUNK_SIZE as int
         let mut sy = (WORLD_H as int) * (CHUNK_SIZE as int) - 1
+
         while sy > 0 and self.scene.world.voxel_handler.is_solid(sx, sy, sx) == False:
             sy = sy - 1
+
         self.player_camera.position = glm.vec3(sx, ((sy + 1) as f64) + EYE_HEIGHT + 0.001, sx)
 
     fn update(self: &mut VoxelEngine):

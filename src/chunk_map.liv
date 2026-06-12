@@ -1,0 +1,134 @@
+from settings import *
+
+const KEY_OFF: int = 1048576
+const KEY_SHIFT_MUL: int = 2097152
+
+fn floor_to_int(v: f64) -> int:
+    let i = v as int
+    if (i as f64) > v:
+        return i - 1
+    i
+
+fn chunk_coord(w: int) -> int:
+    if w < 0:
+        return (w + 1) / (CHUNK_SIZE as int) - 1
+    w / (CHUNK_SIZE as int)
+
+fn pack_key(cx: int, cz: int) -> int:
+    (cx + KEY_OFF) + (cz + KEY_OFF) * KEY_SHIFT_MUL
+
+fn key_cx(key: int) -> int:
+    key % KEY_SHIFT_MUL - KEY_OFF
+
+fn key_cz(key: int) -> int:
+    key / KEY_SHIFT_MUL - KEY_OFF
+
+fn map_hash(key: int, mask: int) -> int:
+    let h = key * -7046029254386353131
+    (h >> 40) & mask
+
+struct ChunkMap:
+    keys: [int]
+    vals: [int]
+    cap: int
+    mask: int
+    count: int
+
+impl ChunkMap:
+    fn __init__(self, cap: int):
+        self.cap = cap
+        self.mask = cap - 1
+        self.count = 0
+        let mut keys: [int] = list_new(cap)
+        let mut vals: [int] = list_new(cap)
+        let mut i = 0
+        while i < cap:
+            keys[i] = -1
+            i = i + 1
+        self.keys = keys
+        self.vals = vals
+
+    fn get(self: &ChunkMap, key: int) -> int:
+        let mut i = map_hash(key, self.mask)
+        while True:
+            let k = self.keys[i]
+            if k == key:
+                return self.vals[i]
+            if k == -1:
+                return -1
+            i = (i + 1) & self.mask
+        -1
+
+    fn set(self: &mut ChunkMap, key: int, val: int):
+        if self.count * 4 >= self.cap * 3:
+            self.grow()
+        let mut i = map_hash(key, self.mask)
+        while True:
+            let k = self.keys[i]
+            if k == key:
+                self.vals[i] = val
+                return
+            if k == -1:
+                self.keys[i] = key
+                self.vals[i] = val
+                self.count = self.count + 1
+                return
+            i = (i + 1) & self.mask
+
+    fn remove(self: &mut ChunkMap, key: int):
+        let mut i = map_hash(key, self.mask)
+        while True:
+            let k = self.keys[i]
+            if k == -1:
+                return
+            if k == key:
+                break
+            i = (i + 1) & self.mask
+        self.count = self.count - 1
+        let mut j = i
+        while True:
+            self.keys[i] = -1
+            let mut moved = False
+            while moved == False:
+                j = (j + 1) & self.mask
+                let kj = self.keys[j]
+                if kj == -1:
+                    return
+                let h = map_hash(kj, self.mask)
+                let mut reachable = False
+                if i <= j:
+                    if i < h and h <= j:
+                        reachable = True
+                else:
+                    if h <= j or h > i:
+                        reachable = True
+                if reachable == False:
+                    self.keys[i] = kj
+                    self.vals[i] = self.vals[j]
+                    i = j
+                    moved = True
+
+    fn grow(self: &mut ChunkMap):
+        let old_cap = self.cap
+        let new_cap = old_cap * 2
+        let mut nkeys: [int] = list_new(new_cap)
+        let mut nvals: [int] = list_new(new_cap)
+        let mut i = 0
+        while i < new_cap:
+            nkeys[i] = -1
+            i = i + 1
+        let nmask = new_cap - 1
+        i = 0
+        while i < old_cap:
+            let k = self.keys[i]
+            if k != -1:
+                let mut p = map_hash(k, nmask)
+                while nkeys[p] != -1:
+                    p = (p + 1) & nmask
+                nkeys[p] = k
+                nvals[p] = self.vals[i]
+            i = i + 1
+        self.keys = nkeys
+        self.vals = nvals
+        self.cap = new_cap
+        self.mask = nmask

@@ -31,6 +31,7 @@ impl ShaderProgram:
         self.chunk['u_texture_array_0'] = 1
         self.chunk['bg_color'].write(BG_COLOR)
         self.chunk['water_line'] = WATER_LINE
+        self.chunk['u_fog_density'] = FOG_DENSITY
 
         self.voxel_marker['m_proj'].write(self.engine.player.camera.m_proj)
         self.voxel_marker['m_model'].write(glm.mat4())
@@ -43,7 +44,7 @@ impl ShaderProgram:
         self.water['water_line'] = WATER_LINE
 
         self.clouds['m_proj'].write(self.engine.player.camera.m_proj)
-        self.clouds['center'] = CENTER_XZ
+        self.clouds['center'] = CLOUD_CENTER
         self.clouds['bg_color'].write(BG_COLOR)
         self.clouds['cloud_scale'] = CLOUD_SCALE
 
@@ -64,6 +65,7 @@ impl ShaderProgram:
         self.chunk['m_view'].write(self.engine.player.camera.m_view)
         self.voxel_marker['m_view'].write(self.engine.player.camera.m_view)
         self.water['m_view'].write(self.engine.player.camera.m_view)
+        self.water['u_cam_pos'].write(glm.vec2(self.engine.player.camera.position.x, self.engine.player.camera.position.z))
         self.clouds['m_view'].write(self.engine.player.camera.m_view)
         self.hotbar['u_selected'] = ((self.engine.scene.world.voxel_handler.new_voxel_id - 1) as float)
 

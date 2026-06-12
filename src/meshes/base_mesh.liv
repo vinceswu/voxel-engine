@@ -30,6 +30,8 @@ impl BaseMesh:
         self.ctx.vertex_array(self.program, content, skip_errors=True)
 
     fn rebuild(self: &mut BaseMesh, vertex_data: bytes):
+        self.vao.release()
+        self.vbo.release()
         self.vbo = self.ctx.buffer(vertex_data)
         self.vao = self.create_vao()
 

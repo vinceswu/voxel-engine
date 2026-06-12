@@ -1,10 +1,21 @@
 from settings import *
+from chunk_map import ChunkMap, chunk_coord, pack_key
+
 import py "glm" as glm
+
+fn loaded_slot(map: &ChunkMap, wx: int, wy: int, wz: int) -> int:
+    if wy < 0 or wy >= (WORLD_H as int) * (CHUNK_SIZE as int):
+        return -1
+    let col = map.get(pack_key(chunk_coord(wx), chunk_coord(wz)))
+    if col < 0:
+        return -1
+    col * (WORLD_H as int) + wy / (CHUNK_SIZE as int)
 
 struct VoxelHandler:
     app: &mut VoxelEngine
     world_voxels: &mut [bytes]
-    chunk_index: int
+    map: &ChunkMap
+    chunk_slot: int
     voxel_id: int
     voxel_index: int
     voxel_local_pos: Any
@@ -16,10 +27,11 @@ struct VoxelHandler:
     break_progress: f64
 
 impl VoxelHandler:
-    fn __init__(self, app: &mut VoxelEngine, world_voxels: &mut [bytes]):
+    fn __init__(self, app: &mut VoxelEngine, world_voxels: &mut [bytes], map: &ChunkMap):
         self.app = app
         self.world_voxels = world_voxels
-        self.chunk_index = 0
+        self.map = map
+        self.chunk_slot = 0
         self.voxel_id = 0
         self.voxel_index = 0
         self.voxel_local_pos = None
@@ -37,75 +49,69 @@ impl VoxelHandler:
     fn is_solid(self: &VoxelHandler, wx: int, wy: int, wz: int) -> bool:
         if wy < 0:
             return True
-        if wx < 0 or wz < 0:
-            return False
-        let cx = wx / (CHUNK_SIZE as int)
-        let cy = wy / (CHUNK_SIZE as int)
-        let cz = wz / (CHUNK_SIZE as int)
-        if cx >= (WORLD_W as int) or cy >= (WORLD_H as int) or cz >= (WORLD_D as int):
-            return False
-        let chunk_index = cx + (WORLD_W as int) * cz + (WORLD_AREA as int) * cy
-        if len(self.world_voxels[chunk_index]) == 0:
-            return False
-        let lx = wx - cx * (CHUNK_SIZE as int)
-        let ly = wy - cy * (CHUNK_SIZE as int)
-        let lz = wz - cz * (CHUNK_SIZE as int)
-        let voxel_index = lx + (CHUNK_SIZE as int) * lz + (CHUNK_AREA as int) * ly
-        self.world_voxels[chunk_index][voxel_index] as int != 0
 
-    fn queue_rebuild(self: &mut VoxelHandler, chunk_index: int):
+        if wy >= (WORLD_H as int) * (CHUNK_SIZE as int):
+            return False
+
+        let slot = loaded_slot(self.map, wx, wy, wz)
+
+        if slot < 0:
+            return True
+
+        let cs = CHUNK_SIZE as int
+        let lx = wx - chunk_coord(wx) * cs
+        let ly = wy % cs
+        let lz = wz - chunk_coord(wz) * cs
+        self.world_voxels[slot][lx + cs * lz + (CHUNK_AREA as int) * ly] as int != 0
+
+    fn queue_rebuild(self: &mut VoxelHandler, chunk_slot: int):
         let mut i = 0
+
         while i < self.rebuild_count:
-            if self.rebuild_queue[i] == chunk_index:
+            if self.rebuild_queue[i] == chunk_slot:
                 return
             i = i + 1
+
         if self.rebuild_count < len(self.rebuild_queue):
-            self.rebuild_queue[self.rebuild_count] = chunk_index
+            self.rebuild_queue[self.rebuild_count] = chunk_slot
             self.rebuild_count = self.rebuild_count + 1
 
     fn add_voxel(self: &mut VoxelHandler):
         if self.voxel_id == 0:
             return
+
         let target = self.voxel_world_pos + self.voxel_normal
         let wx = target[0] as int
         let wy = target[1] as int
         let wz = target[2] as int
 
-        let cx = wx / (CHUNK_SIZE as int)
-        let cy = wy / (CHUNK_SIZE as int)
-        let cz = wz / (CHUNK_SIZE as int)
-        if cx < 0 or cx >= (WORLD_W as int) or cy < 0 or cy >= (WORLD_H as int) or cz < 0 or cz >= (WORLD_D as int):
+        let slot = loaded_slot(self.map, wx, wy, wz)
+        if slot < 0:
             return
 
-        let chunk_index = cx + (WORLD_W as int) * cz + (WORLD_AREA as int) * cy
-        if len(self.world_voxels[chunk_index]) == 0:
-            self.world_voxels[chunk_index] = bytes_new(CHUNK_VOL as int)
+        let cs = CHUNK_SIZE as int
+        let lx = wx - chunk_coord(wx) * cs
+        let ly = wy % cs
+        let lz = wz - chunk_coord(wz) * cs
+        let voxel_index = lx + cs * lz + (CHUNK_AREA as int) * ly
 
-        let lx = wx - cx * (CHUNK_SIZE as int)
-        let ly = wy - cy * (CHUNK_SIZE as int)
-        let lz = wz - cz * (CHUNK_SIZE as int)
-        let voxel_index = lx + (CHUNK_SIZE as int) * lz + (CHUNK_AREA as int) * ly
-
-        if self.world_voxels[chunk_index][voxel_index] as int == 0:
-            self.world_voxels[chunk_index][voxel_index] = self.new_voxel_id
-            self.queue_rebuild(chunk_index)
+        if self.world_voxels[slot][voxel_index] as int == 0:
+            self.world_voxels[slot][voxel_index] = self.new_voxel_id
+            self.queue_rebuild(slot)
 
     fn remove_voxel(self: &mut VoxelHandler):
         if self.voxel_id == 0:
             return
-        self.world_voxels[self.chunk_index][self.voxel_index] = 0
-        self.queue_rebuild(self.chunk_index)
+
+        self.world_voxels[self.chunk_slot][self.voxel_index] = 0
+        self.queue_rebuild(self.chunk_slot)
         self.rebuild_adjacent_chunks()
 
     fn rebuild_adj_chunk(self: &mut VoxelHandler, wx: int, wy: int, wz: int):
-        let cx = wx / (CHUNK_SIZE as int)
-        let cy = wy / (CHUNK_SIZE as int)
-        let cz = wz / (CHUNK_SIZE as int)
-        if cx < 0 or cx >= (WORLD_W as int) or cy < 0 or cy >= (WORLD_H as int) or cz < 0 or cz >= (WORLD_D as int):
-            return
-        let chunk_index = cx + (WORLD_W as int) * cz + (WORLD_AREA as int) * cy
-        if len(self.world_voxels[chunk_index]) != 0:
-            self.queue_rebuild(chunk_index)
+        let slot = loaded_slot(self.map, wx, wy, wz)
+
+        if slot >= 0:
+            self.queue_rebuild(slot)
 
     fn rebuild_adjacent_chunks(self: &mut VoxelHandler):
         let lx = self.voxel_local_pos[0] as int
@@ -143,7 +149,7 @@ impl VoxelHandler:
         let y2 = end_pos[1] as float
         let z2 = end_pos[2] as float
 
-        let mut current_voxel_pos = glm.ivec3(int(x1), int(y1), int(z1))
+        let mut current_voxel_pos = glm.ivec3(int(glm.floor(x1)), int(glm.floor(y1)), int(glm.floor(z1)))
         self.voxel_id = 0
         self.voxel_normal = glm.ivec3(0)
         let mut step_dir = -1
@@ -187,21 +193,25 @@ impl VoxelHandler:
         let mut iters = 0
         while not (max_x > 1.0 and max_y > 1.0 and max_z > 1.0):
             iters = iters + 1
+
             if iters > 100:
                 return False
+
             let result = self.get_voxel_id(current_voxel_pos)
             if result[0] as int != 0:
                 self.voxel_id = result[0] as int
                 self.voxel_index = result[1] as int
                 self.voxel_local_pos = result[2]
-                self.chunk_index = result[3] as int
+                self.chunk_slot = result[3] as int
                 self.voxel_world_pos = current_voxel_pos
+
                 if step_dir == 0:
                     self.voxel_normal.x = -dx
                 elif step_dir == 1:
                     self.voxel_normal.y = -dy
                 else:
                     self.voxel_normal.z = -dz
+
                 return True
 
             if max_x < max_y:
@@ -222,7 +232,6 @@ impl VoxelHandler:
                     current_voxel_pos.z = current_voxel_pos.z + dz
                     max_z = max_z + delta_z
                     step_dir = 2
-
         False
 
     fn get_voxel_id(self: &VoxelHandler, voxel_world_pos: PyObject) -> (Any, Any, Any, Any):
@@ -230,20 +239,17 @@ impl VoxelHandler:
         let wy = voxel_world_pos[1] as int
         let wz = voxel_world_pos[2] as int
 
-        let cx = wx / (CHUNK_SIZE as int)
-        let cy = wy / (CHUNK_SIZE as int)
-        let cz = wz / (CHUNK_SIZE as int)
+        let slot = loaded_slot(self.map, wx, wy, wz)
 
-        if 0 <= cx and cx < (WORLD_W as int) and 0 <= cy and cy < (WORLD_H as int) and 0 <= cz and cz < (WORLD_D as int):
-            let chunk_index = cx + (WORLD_W as int) * cz + (WORLD_AREA as int) * cy
-            if len(self.world_voxels[chunk_index]) != 0:
-                let lx = wx - cx * (CHUNK_SIZE as int)
-                let ly = wy - cy * (CHUNK_SIZE as int)
-                let lz = wz - cz * (CHUNK_SIZE as int)
+        if slot >= 0:
+            let cs = CHUNK_SIZE as int
+            let lx = wx - chunk_coord(wx) * cs
+            let ly = wy % cs
+            let lz = wz - chunk_coord(wz) * cs
 
-                let voxel_index = lx + (CHUNK_SIZE as int) * lz + (CHUNK_AREA as int) * ly
-                let voxel_id = self.world_voxels[chunk_index][voxel_index]
+            let voxel_index = lx + cs * lz + (CHUNK_AREA as int) * ly
+            let voxel_id = self.world_voxels[slot][voxel_index]
 
-                return (voxel_id, voxel_index, (lx, ly, lz), chunk_index)
+            return (voxel_id, voxel_index, (lx, ly, lz), slot)
 
         (0, 0, (0, 0, 0), 0)

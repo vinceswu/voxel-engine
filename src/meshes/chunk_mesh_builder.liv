@@ -1,15 +1,7 @@
 from settings import *
 
-fn get_chunk_index(position: (int, int, int)) -> int:
-    let cx = position[0] / (CHUNK_SIZE as int)
-    let cy = position[1] / (CHUNK_SIZE as int)
-    let cz = position[2] / (CHUNK_SIZE as int)
-    chunk_index_at(cx, cy, cz)
-
-fn chunk_index_at(cx: int, cy: int, cz: int) -> int:
-    if 0 <= cx and cx < (WORLD_W as int) and 0 <= cy and cy < (WORLD_H as int) and 0 <= cz and cz < (WORLD_D as int):
-        return cx + (WORLD_W as int) * cz + (WORLD_AREA as int) * cy
-    -1
+fn neighbor_slot(slots: &[int], dcx: int, dcy: int, dcz: int) -> int:
+    slots[(dcx + 1) + 3 * (dcz + 1) + 9 * (dcy + 1)]
 
 fn face_normals_table() -> [int]:
     [
@@ -129,9 +121,9 @@ fn emit_seq_table() -> [int]:
         3, 2, 0, 3, 1, 2   // odd flipped face
     ]
 
-fn is_solid(world_voxels: &mut [bytes], ci_self: int, x: int, y: int, z: int, cs: int, ca: int, px: int, py_c: int, pz: int) -> int:
+fn is_solid(world_voxels: &mut [bytes], slots: &[int], x: int, y: int, z: int, cs: int, ca: int) -> int:
     if 0 <= x and x < cs and 0 <= y and y < cs and 0 <= z and z < cs:
-        if world_voxels[ci_self][x + cs * z + ca * y] != 0:
+        if world_voxels[slots[13]][x + cs * z + ca * y] != 0:
             return 1
         return 0
     let mut dcx = 0
@@ -149,14 +141,13 @@ fn is_solid(world_voxels: &mut [bytes], ci_self: int, x: int, y: int, z: int, cs
         dcz = -1
     elif z >= cs:
         dcz = 1
-    let nci = chunk_index_at(px + dcx, py_c + dcy, pz + dcz)
+    let nci = neighbor_slot(slots, dcx, dcy, dcz)
     if nci >= 0:
-        if len(world_voxels[nci]) != 0:
-            let lx = ((x % cs) + cs) % cs
-            let ly = ((y % cs) + cs) % cs
-            let lz = ((z % cs) + cs) % cs
-            if world_voxels[nci][lx + cs * lz + ca * ly] != 0:
-                return 1
+        let lx = ((x % cs) + cs) % cs
+        let ly = ((y % cs) + cs) % cs
+        let lz = ((z % cs) + cs) % cs
+        if world_voxels[nci][lx + cs * lz + ca * ly] != 0:
+            return 1
     0
 
 fn ao_at(ao0: int, ao1: int, ao2: int, ao3: int, idx: int) -> int:
@@ -168,7 +159,7 @@ fn ao_at(ao0: int, ao1: int, ao2: int, ao3: int, idx: int) -> int:
         return ao2
     ao3
 
-fn build_chunk_mesh(world_voxels: &mut [bytes], chunk_index: int, px: int, py_c: int, pz: int) -> bytes:
+fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
     let cs = CHUNK_SIZE as int
     let ca = cs * cs
 
@@ -180,6 +171,7 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], chunk_index: int, px: int, py_c:
     let seq = emit_seq_table()
 
     let mut out = bytes_new(0)
+    let chunk_index = slots[13]
     if len(world_voxels[chunk_index]) == 0:
         return out
 
@@ -207,14 +199,13 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], chunk_index: int, px: int, py_c:
                             if voxels[ax + cs * az + ca * ay] != 0:
                                 neighbor_solid = 1
                         else:
-                            let nci = chunk_index_at(px + nx, py_c + ny, pz + nz)
+                            let nci = neighbor_slot(slots, nx, ny, nz)
                             if nci >= 0:
-                                if len(world_voxels[nci]) != 0:
-                                    let lx = ((ax % cs) + cs) % cs
-                                    let ly = ((ay % cs) + cs) % cs
-                                    let lz = ((az % cs) + cs) % cs
-                                    if world_voxels[nci][lx + cs * lz + ca * ly] != 0:
-                                        neighbor_solid = 1
+                                let lx = ((ax % cs) + cs) % cs
+                                let ly = ((ay % cs) + cs) % cs
+                                let lz = ((az % cs) + cs) % cs
+                                if world_voxels[nci][lx + cs * lz + ca * ly] != 0:
+                                    neighbor_solid = 1
 
                         if neighbor_solid == 0:
                             let mut ao0 = 0
@@ -224,9 +215,9 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], chunk_index: int, px: int, py_c:
                             let mut ci = 0
                             while ci < 4:
                                 let base = face * 36 + ci * 9
-                                let s0 = is_solid(world_voxels, chunk_index, x + ao_offs[base], y + ao_offs[base + 1], z + ao_offs[base + 2], cs, ca, px, py_c, pz)
-                                let s1 = is_solid(world_voxels, chunk_index, x + ao_offs[base + 3], y + ao_offs[base + 4], z + ao_offs[base + 5], cs, ca, px, py_c, pz)
-                                let s2 = is_solid(world_voxels, chunk_index, x + ao_offs[base + 6], y + ao_offs[base + 7], z + ao_offs[base + 8], cs, ca, px, py_c, pz)
+                                let s0 = is_solid(world_voxels, slots, x + ao_offs[base], y + ao_offs[base + 1], z + ao_offs[base + 2], cs, ca)
+                                let s1 = is_solid(world_voxels, slots, x + ao_offs[base + 3], y + ao_offs[base + 4], z + ao_offs[base + 5], cs, ca)
+                                let s2 = is_solid(world_voxels, slots, x + ao_offs[base + 6], y + ao_offs[base + 7], z + ao_offs[base + 8], cs, ca)
                                 let mut ao = 3 - s0 - s1
                                 if s2 != 0 and (s0 == 0 or s1 == 0):
                                     ao = ao - 1

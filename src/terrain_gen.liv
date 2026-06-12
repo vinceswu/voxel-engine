@@ -2,14 +2,14 @@ from settings import *
 from noise import NoiseState, noise2, noise3
 
 import math
-import random
+
+fn coord_rand(wx: int, wy: int, wz: int) -> float:
+    let mut h = wx * -7046029254386353131 + wz * -4417276706812531889 + wy * 6364136223846793005 + (SEED as int) * 2654435761
+    h = h * -49064778989728563
+    h = h + (h >> 31) * -4265267296055464877
+    (((h >> 40) & 16777215) as float) / 16777216.0
 
 fn get_height(noise: &NoiseState, x: int, z: int) -> int:
-    let cx = x as float - (CENTER_XZ as float)
-    let cz = z as float - (CENTER_XZ as float)
-    let island = 1.0 / (((0.0025 * math.hypot(cx, cz)) ** 20.0) + 0.0001)
-    let island = math.min(island, 1.0)
-
     let a1 = CENTER_Y as float
     let a2 = a1 * 0.5
     let a4 = a1 * 0.25
@@ -29,14 +29,37 @@ fn get_height(noise: &NoiseState, x: int, z: int) -> int:
     h = h + noise2(noise, x as float * f4, z as float * f4) * a4 + a4
     h = h + noise2(noise, x as float * f8, z as float * f8) * a8 - a8
     h = math.max(h, noise2(noise, x as float * f8, z as float * f8) + 2.0)
-    h = h * island
 
     int(h)
 
 fn get_index(x: int, y: int, z: int) -> int:
     x + (CHUNK_SIZE as int) * z + (CHUNK_AREA as int) * y
 
-fn set_voxel_id(noise: &NoiseState, voxels: &mut bytes, x: int, y: int, z: int, wx: int, wy: int, wz: int, world_height: int):
+fn fill_chunk(noise: &NoiseState, voxels: &mut bytes, heights: &[int], wx0: int, wy0: int, wz0: int) -> int:
+    let cs = CHUNK_SIZE as int
+    let mut i = 0
+    while i < (CHUNK_VOL as int):
+        voxels[i] = 0
+        i = i + 1
+    let mut solid = 0
+    let mut x = 0
+    while x < cs:
+        let wx = wx0 + x
+        let mut z = 0
+        while z < cs:
+            let wz = wz0 + z
+            let world_height = heights[x + cs * z]
+            let local_height = min(world_height - wy0, cs)
+            let mut y = 0
+            while y < local_height:
+                if set_voxel_id(noise, voxels, x, y, z, wx, wy0 + y, wz, world_height) != 0:
+                    solid = solid + 1
+                y = y + 1
+            z = z + 1
+        x = x + 1
+    solid
+
+fn set_voxel_id(noise: &NoiseState, voxels: &mut bytes, x: int, y: int, z: int, wx: int, wy: int, wz: int, world_height: int) -> int:
     let mut voxel_id: int = 0
     if wy < world_height - 1:
         let n3 = noise3(noise, wx as float * 0.09, wy as float * 0.09, wz as float * 0.09)
@@ -46,7 +69,7 @@ fn set_voxel_id(noise: &NoiseState, voxels: &mut bytes, x: int, y: int, z: int, 
         else:
             voxel_id = STONE as int
     else:
-        let rng = int(7.0 * random.random())
+        let rng = int(7.0 * coord_rand(wx, wy, wz))
         let ry = wy - rng
         if (SNOW_LVL as int) <= ry and ry < world_height:
             voxel_id = SNOW as int
@@ -62,10 +85,11 @@ fn set_voxel_id(noise: &NoiseState, voxels: &mut bytes, x: int, y: int, z: int, 
     voxels[get_index(x, y, z)] = voxel_id
 
     if wy < (DIRT_LVL as int):
-        place_tree(voxels, x, y, z, voxel_id)
+        place_tree(voxels, x, y, z, wx, wy, wz, voxel_id)
+    voxel_id
 
-fn place_tree(voxels: &mut bytes, x: int, y: int, z: int, voxel_id: int):
-    if voxel_id != (GRASS as int) or random.random() > (TREE_PROBABILITY as float):
+fn place_tree(voxels: &mut bytes, x: int, y: int, z: int, wx: int, wy: int, wz: int, voxel_id: int):
+    if voxel_id != (GRASS as int) or coord_rand(wz, wy, wx) > (TREE_PROBABILITY as float):
         return
     if y + (TREE_HEIGHT as int) >= (CHUNK_SIZE as int):
         return
@@ -81,7 +105,7 @@ fn place_tree(voxels: &mut bytes, x: int, y: int, z: int, voxel_id: int):
     let mut iy = TREE_H_HEIGHT as int
     while iy < (TREE_HEIGHT as int) - 1:
         let k = iy % 2
-        let rng = int(random.random() * 2.0)
+        let rng = int(coord_rand(wx, wy + iy, wz) * 2.0)
         let mut ix = -(TREE_H_WIDTH as int) + m
         while ix < (TREE_H_WIDTH as int) - m * rng:
             let mut iz = -(TREE_H_WIDTH as int) + m * rng

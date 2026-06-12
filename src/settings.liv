@@ -20,14 +20,16 @@ const CHUNK_AREA: u16 = (CHUNK_SIZE as u16) * (CHUNK_SIZE as u16)
 const CHUNK_VOL: u32 = (CHUNK_AREA as u32) * (CHUNK_SIZE as u32)
 const CHUNK_SPHERE_RADIUS: f32 = ((H_CHUNK_SIZE as float) * math.sqrt(3.0)) as f32
 
-const WORLD_W: u8 = 20
 const WORLD_H: u8 = 2
-const WORLD_D: u8 = WORLD_W
-const WORLD_AREA: u16 = (WORLD_W as u16) * (WORLD_D as u16)
-const WORLD_VOL: u16 = WORLD_AREA * (WORLD_H as u16)
-
-const CENTER_XZ: u16 = (WORLD_W as u16) * (H_CHUNK_SIZE as u16)
 const CENTER_Y: u8 = WORLD_H * H_CHUNK_SIZE
+
+const RENDER_DIST: u8 = 6
+const LOAD_DIST: u8 = RENDER_DIST + 1
+const UNLOAD_DIST: u8 = LOAD_DIST + 2
+const GEN_BUDGET: u8 = 1
+const MESH_BUDGET: u8 = 1
+
+const FOG_DENSITY: f64 = 4.32 / (((RENDER_DIST as float) * (CHUNK_SIZE as float)) ** 2.0)
 
 const ASPECT_RATIO: f32 = (WIN_RES.x as f32) / (WIN_RES.y as f32)
 const FOV_DEG: f32 = 50.0
@@ -39,10 +41,9 @@ const PITCH_MAX: f32 = glm.radians(90.0) as f32
 
 const PLAYER_SPEED: f32 = 0.05
 const PLAYER_ROT_SPEED: f32 = 0.003
-const PLAYER_POS = glm.vec3(CENTER_XZ as int, CHUNK_SIZE as int * 3, CENTER_XZ as int)
+const PLAYER_POS = glm.vec3(H_CHUNK_SIZE as int, CHUNK_SIZE as int * 3, H_CHUNK_SIZE as int)
 const MOUSE_SENSITIVITY: f32 = 0.001
 
-// Physics. Time unit is milliseconds (delta_time comes from clock.tick).
 const GRAVITY: f64 = 0.000032
 const JUMP_SPEED: f64 = 0.0095
 const WALK_SPEED: f64 = 0.005
@@ -78,7 +79,9 @@ const TREE_HEIGHT: u8 = 8
 const TREE_H_WIDTH, TREE_H_HEIGHT: u8 = TREE_WIDTH / 2, TREE_HEIGHT / 2
 
 const WATER_LINE: f32 = 5.6
-const WATER_AREA: u16 = 5 * (CHUNK_SIZE as u16) * (WORLD_W as u16)
+const WATER_AREA: u16 = 4800
 
 const CLOUD_SCALE: u8 = 25
+const CLOUD_W: u16 = 960
+const CLOUD_CENTER: u16 = CLOUD_W / 2
 const CLOUD_HEIGHT: u8 = WORLD_H * CHUNK_SIZE * 2
