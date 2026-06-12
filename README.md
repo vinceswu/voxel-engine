@@ -25,9 +25,14 @@ A voxel engine written in [Olive](https://github.com/olive-language/olive). This
 
 Olive handles all the game logic. Rendering goes through pygame and ModernGL via `import py`. Noise generation is a native Olive implementation of OpenSimplex2 (no Python noise libraries needed).
 
+## Prerequisites
+
+- **Olive >= 0.1.23** - see installation below
+- **Python 3.x** - with dependencies from `requirements.txt`
+
 ## Controls
 
-### Movement
+#### Movement
 
 | Input | Action |
 |-------|--------|
@@ -39,7 +44,7 @@ Olive handles all the game logic. Rendering goes through pygame and ModernGL via
 | Mouse | Look around |
 | `\` | Toggle noclip (free camera, no collision) |
 
-### Block Interaction
+#### Block Interaction
 
 | Input | Action |
 |-------|--------|
@@ -48,17 +53,12 @@ Olive handles all the game logic. Rendering goes through pygame and ModernGL via
 | 1 – 7 | Select block type (Sand / Grass / Dirt / Stone / Snow / Leaves / Wood) |
 | Scroll Wheel | Cycle block type |
 
-### Other
+#### Other
 
 | Input | Action |
 |-------|--------|
 | Escape | Quit |
 | F12 | Save screenshot |
-
-## Prerequisites
-
-- **Olive >= 0.1.23** - see installation below
-- **Python 3.x** - with dependencies from `requirements.txt`
 
 ## Installation
 
