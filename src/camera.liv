@@ -1,4 +1,5 @@
 from frustum import Frustum
+from settings import FOV_DEG, NEAR, FAR, FOV_LERP_MS
 
 import py "glm" as glm
 import py "pygame" as pg
@@ -14,6 +15,10 @@ struct Camera:
     m_proj: PyObject
     m_view: PyObject
     frustum: Frustum
+    aspect: f64
+    fov_deg: f64
+    fov_target: f64
+    proj_dirty: bool
 
 impl Camera:
     fn __init__(self, position: PyObject, yaw: f64, pitch: f64):
@@ -24,14 +29,40 @@ impl Camera:
         self.right = glm.vec3(1, 0, 0)
         self.forward = glm.vec3(0, 0, -1)
         let win_size = pg.display.get_surface().get_size()
-        let aspect = (win_size[0] as float) / (win_size[1] as float)
-        self.m_proj = glm.perspective(glm.radians(50.0) as float, aspect as float, 0.1 as float, 2000.0 as float)
+        self.aspect = ((win_size[0] as float) as f64) / ((win_size[1] as float) as f64)
+        self.fov_deg = (FOV_DEG as float) as f64
+        self.fov_target = (FOV_DEG as float) as f64
+        self.proj_dirty = False
+        self.m_proj = glm.perspective(glm.radians(self.fov_deg as float), self.aspect as float, (NEAR as float), (FAR as float))
         self.m_view = glm.mat4()
         self.frustum = Frustum()
 
-    fn update(self: &mut Camera):
+    fn rebuild_proj(self: &mut Camera):
+        let v_fov = self.fov_deg * 0.017453292519943295
+        self.m_proj = glm.perspective(v_fov as float, self.aspect as float, (NEAR as float), (FAR as float))
+        self.frustum.set_fov(v_fov, self.aspect)
+        self.proj_dirty = True
+
+    fn resize(self: &mut Camera, width: int, height: int):
+        self.aspect = (width as f64) / (height as f64)
+        self.rebuild_proj()
+
+    fn update(self: &mut Camera, dt_ms: f64):
+        self.update_fov(dt_ms)
         self.update_vectors()
         self.update_view_matrix()
+
+    fn update_fov(self: &mut Camera, dt_ms: f64):
+        let mut diff = self.fov_target - self.fov_deg
+        if diff > 0.001 or diff < -0.001:
+            let mut k = dt_ms / FOV_LERP_MS
+            if k > 1.0:
+                k = 1.0
+            self.fov_deg = self.fov_deg + diff * k
+            diff = self.fov_target - self.fov_deg
+            if diff > -0.05 and diff < 0.05:
+                self.fov_deg = self.fov_target
+            self.rebuild_proj()
 
     fn update_view_matrix(self: &mut Camera):
         self.m_view = glm.lookAt(self.position, self.position + self.forward, self.up)

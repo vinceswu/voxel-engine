@@ -53,7 +53,11 @@ impl Player:
         self.keyboard_control(dt_ms)
         self.mouse_control()
         self.update_breaking(dt_ms)
-        self.camera.update()
+        let mut fov = (FOV_DEG as float) as f64
+        if self.shift_down and self.w_down:
+            fov = fov * SPRINT_FOV_MULT
+        self.camera.fov_target = fov
+        self.camera.update(dt_ms)
 
     fn handle_event(self: &mut Player, event: PyObject):
         if event.type == pg.MOUSEBUTTONDOWN:
@@ -65,6 +69,14 @@ impl Player:
         if event.type == pg.MOUSEBUTTONUP:
             if event.button == 1:
                 self.breaking = False
+
+        if event.type == pg.MOUSEWHEEL:
+            let mut id = self.app.scene.world.voxel_handler.new_voxel_id - (event.y as int)
+            while id < 1:
+                id = id + 7
+            while id > 7:
+                id = id - 7
+            self.app.scene.world.voxel_handler.new_voxel_id = id
 
         if event.type == pg.KEYDOWN:
             if event.key >= pg.K_1 and event.key <= pg.K_7:
@@ -127,9 +139,9 @@ impl Player:
         let mut dz = 0.0
 
         if self.flying or self.noclip:
-            let mut vel = ((PLAYER_SPEED as float) as f64) * dt_ms
+            let mut vel = FLY_SPEED * dt_ms
             if self.shift_down:
-                vel = vel * 3.0
+                vel = vel * FLY_SPRINT_MULT
             let fx = (self.camera.forward[0] as float) as f64
             let fy = (self.camera.forward[1] as float) as f64
             let fz = (self.camera.forward[2] as float) as f64
@@ -198,8 +210,6 @@ impl Player:
             py = py + dy
             pz = pz + dz
         else:
-            // Substep so a single step never exceeds half a voxel,
-            // otherwise fast falls tunnel through thin terrain.
             let mut adx = dx
             if adx < 0.0:
                 adx = 0.0 - adx
@@ -221,9 +231,8 @@ impl Player:
 
             self.on_ground = False
             let mut step_i = 0
+
             while step_i < steps:
-                // Move and resolve one axis at a time so sliding along
-                // walls works without getting stuck on corners.
                 px = px + sx
                 if self.collides(px, py, pz):
                     if sx > 0.0:

@@ -12,6 +12,8 @@ import py "sys" as sys
 
 struct VoxelEngine:
     ctx: PyObject
+    win_width: int
+    win_height: int
     clock: PyObject
     delta_time: f64
     time: f64
@@ -33,8 +35,11 @@ impl VoxelEngine:
         pg.display.gl_set_attribute(pg.GL_CONTEXT_PROFILE_MASK, pg.GL_CONTEXT_PROFILE_CORE)
         pg.display.gl_set_attribute(pg.GL_DEPTH_SIZE, 24)
 
-        pg.display.set_mode(WIN_RES, flags=pg.OPENGL | pg.DOUBLEBUF)
+        pg.display.set_mode(WIN_RES, flags=pg.OPENGL | pg.DOUBLEBUF | pg.RESIZABLE)
         self.ctx = mgl.create_context()
+        let res = WIN_RES
+        self.win_width = res.x as int
+        self.win_height = res.y as int
 
         self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE | mgl.BLEND)
         self.ctx.gc_mode = 'auto'
@@ -91,12 +96,21 @@ impl VoxelEngine:
                 self.is_running = False
             if event.type == pg.KEYDOWN and event.key == pg.K_F12:
                 self.screenshot_requested = True
+            if event.type == pg.VIDEORESIZE:
+                self.on_resize(event.w as int, event.h as int)
             self.player.handle_event(event)
 
+    fn on_resize(self: &mut VoxelEngine, width: int, height: int):
+        if width > 0 and height > 0:
+            self.win_width = width
+            self.win_height = height
+            self.ctx.viewport = (0, 0, width, height)
+            self.player_camera.resize(width, height)
+            self.shader_program.on_resize(width, height)
+
     fn save_screenshot(self: &mut VoxelEngine):
-        let surf = pg.display.get_surface()
-        let width = surf.get_width()
-        let height = surf.get_height()
+        let width = self.win_width
+        let height = self.win_height
         let pixels = self.ctx.screen.read(viewport=(0, 0, width, height), alignment=1)
         import py "PIL.Image" as Image
         let image = Image.frombytes('RGB', (width, height), pixels)

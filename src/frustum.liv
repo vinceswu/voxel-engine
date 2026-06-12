@@ -17,6 +17,14 @@ impl Frustum:
         self.factor_x = 1.0 / math.cos(half_x)
         self.tan_x = math.tan(half_x)
 
+    fn set_fov(self: &mut Frustum, v_fov: f64, aspect: f64):
+        let half_y = v_fov * 0.5
+        self.factor_y = 1.0 / math.cos(half_y)
+        self.tan_y = math.tan(half_y)
+        let half_x = math.atan(math.tan(half_y) * aspect)
+        self.factor_x = 1.0 / math.cos(half_x)
+        self.tan_x = math.tan(half_x)
+
     fn is_on_frustum(self: &Frustum, ccx: f64, ccy: f64, ccz: f64, px: f64, py: f64, pz: f64, fx: f64, fy: f64, fz: f64, ux: f64, uy: f64, uz: f64, rx: f64, ry: f64, rz: f64) -> bool:
         let r = (CHUNK_SPHERE_RADIUS as float) as f64
         let dx = ccx - px
