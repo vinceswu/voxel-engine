@@ -8,14 +8,14 @@
 </div>
 
 <p align="center">
-  <a href="https://github.com/ecnivs/voxel-engine/stargazers">
-    <img src="https://img.shields.io/github/stars/ecnivs/voxel-engine?style=flat-square">
+  <a href="https://github.com/vinceswu/voxel-engine/stargazers">
+    <img src="https://img.shields.io/github/stars/vinceswu/voxel-engine?style=flat-square">
   </a>
-  <a href="https://github.com/ecnivs/voxel-engine/issues">
-    <img src="https://img.shields.io/github/issues/ecnivs/voxel-engine?style=flat-square">
+  <a href="https://github.com/vinceswu/voxel-engine/issues">
+    <img src="https://img.shields.io/github/issues/vinceswu/voxel-engine?style=flat-square">
   </a>
-  <a href="https://github.com/ecnivs/voxel-engine/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/ecnivs/voxel-engine?style=flat-square">
+  <a href="https://github.com/vinceswu/voxel-engine/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/vinceswu/voxel-engine?style=flat-square">
   </a>
 </p>
 
