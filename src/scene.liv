@@ -5,6 +5,7 @@ from world_objects.voxel_marker import VoxelMarker
 from meshes.crosshair_mesh import CrosshairMesh
 from meshes.hotbar_mesh import HotbarMesh
 from meshes.skybox_mesh import SkyboxMesh
+from meshes.hud_mesh import HudMesh
 
 import py "moderngl" as mgl
 
@@ -16,6 +17,7 @@ struct Scene:
     crosshair: CrosshairMesh
     hotbar: HotbarMesh
     skybox: SkyboxMesh
+    hud: HudMesh
 
 impl Scene:
     fn __init__(self, app: &mut VoxelEngine):
@@ -26,6 +28,7 @@ impl Scene:
         self.crosshair = CrosshairMesh(app)
         self.hotbar = HotbarMesh(app)
         self.skybox = SkyboxMesh(app)
+        self.hud = HudMesh(app)
 
     fn update(self: &mut Scene):
         self.world.update()
@@ -54,4 +57,5 @@ impl Scene:
         ctx.blend_func = mgl.DEFAULT_BLENDING
 
         self.hotbar.render()
+        self.hud.render()
         ctx.enable(mgl.DEPTH_TEST)

@@ -5,8 +5,8 @@ import py "glm" as glm
 struct VoxelMarker:
     app: &mut VoxelEngine
     handler: &mut VoxelHandler
-    position: PyObject
-    m_model: PyObject
+    position: glm.vec3
+    m_model: glm.mat4
     mesh: CubeMesh
 
 impl VoxelMarker:
@@ -25,7 +25,7 @@ impl VoxelMarker:
         self.mesh.base.program['m_model'].write(self.get_model_matrix())
         self.mesh.base.program['u_progress'] = self.handler.break_progress as float
 
-    fn get_model_matrix(self: &VoxelMarker) -> PyObject:
+    fn get_model_matrix(self: &VoxelMarker) -> glm.mat4:
         glm.translate(glm.mat4(), glm.vec3(self.position))
 
     fn render(self: &mut VoxelMarker):

@@ -8,7 +8,7 @@ struct Chunk:
     world_voxels: &mut [bytes]
     position: (int, int, int)
     slot: int
-    m_model: PyObject
+    m_model: glm.mat4
     mesh: ChunkMesh
     is_empty: bool
     center_x: f64
@@ -32,12 +32,12 @@ impl Chunk:
         self.position = (cx, cy, cz)
         self.m_model = self.get_model_matrix()
         self.is_empty = True
-        let cs = (CHUNK_SIZE as float) as f64
-        self.center_x = ((cx as float) as f64 + 0.5) * cs
-        self.center_y = ((cy as float) as f64 + 0.5) * cs
-        self.center_z = ((cz as float) as f64 + 0.5) * cs
+        let cs = CHUNK_SIZE as f64
+        self.center_x = (cx as f64 + 0.5) * cs
+        self.center_y = (cy as f64 + 0.5) * cs
+        self.center_z = (cz as f64 + 0.5) * cs
 
-    fn get_model_matrix(self: &Chunk) -> PyObject:
+    fn get_model_matrix(self: &Chunk) -> glm.mat4:
         let px = self.position[0] as float
         let py_f = self.position[1] as float
         let pz = self.position[2] as float

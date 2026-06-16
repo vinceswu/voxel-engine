@@ -11,6 +11,7 @@ struct ShaderProgram:
     crosshair: PyObject
     hotbar: PyObject
     skybox: PyObject
+    hud: PyObject
 
 impl ShaderProgram:
     fn __init__(self, engine: &mut VoxelEngine):
@@ -24,6 +25,7 @@ impl ShaderProgram:
         self.crosshair = self.get_program(shader_name='crosshair')
         self.hotbar = self.get_program(shader_name='hotbar')
         self.skybox = self.get_program(shader_name='skybox')
+        self.hud = self.get_program(shader_name='hud')
 
         self.set_uniforms_on_init()
 
@@ -50,7 +52,7 @@ impl ShaderProgram:
         self.clouds['bg_color'].write(BG_COLOR)
         self.clouds['cloud_scale'] = CLOUD_SCALE
 
-        self.set_screen_uniforms((WIN_RES.x as float) as f64, (WIN_RES.y as float) as f64)
+        self.set_screen_uniforms(WIN_RES.x as f64, WIN_RES.y as f64)
         self.hotbar['u_texture_array_0'] = 1
         self.hotbar['u_selected'] = 0.0
 

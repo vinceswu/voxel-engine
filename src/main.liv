@@ -76,7 +76,7 @@ impl VoxelEngine:
 
     fn update(self: &mut VoxelEngine):
         self.delta_time = self.clock.tick(FPS)
-        self.player.update(self.delta_time as float)
+        self.player.update(self.delta_time)
         self.shader_program.update()
         self.scene.update()
         self.time = (pg.time.get_ticks() as float) * 0.001
@@ -107,6 +107,7 @@ impl VoxelEngine:
             self.ctx.viewport = (0, 0, width, height)
             self.player_camera.resize(width, height)
             self.shader_program.on_resize(width, height)
+            self.scene.hud.on_resize()
 
     fn save_screenshot(self: &mut VoxelEngine):
         let width = self.win_width

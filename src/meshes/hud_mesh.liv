@@ -1,0 +1,97 @@
+import py "struct" as pystruct
+import py "pygame" as pg
+import py "moderngl" as mgl
+import py "builtins" as builtins
+
+const HUD_TEX_W: int = 260
+const HUD_TEX_H: int = 52
+
+struct HudMesh:
+    app: &mut VoxelEngine
+    program: PyObject
+    texture: PyObject
+    vao: PyObject
+    vbo: PyObject
+    font: PyObject
+    surf: PyObject
+
+impl HudMesh:
+    fn __init__(self, app: &mut VoxelEngine):
+        self.app = app
+        self.program = app.shader_program.hud
+
+        pg.font.init()
+        self.font = pg.font.SysFont('monospace', 18, bold=True)
+        let surf_size = builtins.tuple([HUD_TEX_W, HUD_TEX_H])
+        self.surf = pg.Surface(surf_size, pg.SRCALPHA)
+
+        let blank = pg.image.tobytes(self.surf, 'RGBA', False)
+        self.texture = app.ctx.texture(self.surf.get_size(), 4, blank)
+        self.texture.filter = (mgl.NEAREST, mgl.NEAREST)
+
+        self.vbo = None
+        self.vao = None
+        self.rebuild_geo()
+        self.program['u_texture'] = 3
+
+    fn rebuild_geo(self: &mut HudMesh):
+        let sw = self.app.win_width as f64
+        let sh = self.app.win_height as f64
+        let tw = HUD_TEX_W as f64
+        let th = HUD_TEX_H as f64
+        let mx = 8.0 * 2.0 / sw
+        let my = 8.0 * 2.0 / sh
+        let x1 = 1.0 - 2.0 * tw / sw - mx
+        let x2 = 1.0 - mx
+        let y2 = 1.0 - my
+        let y1 = y2 - 2.0 * th / sh
+
+        let v0 = pystruct.pack('4f', x1, y2, 0.0, 0.0)
+        let v1 = pystruct.pack('4f', x1, y1, 0.0, 1.0)
+        let v2 = pystruct.pack('4f', x2, y1, 1.0, 1.0)
+        let v3 = pystruct.pack('4f', x1, y2, 0.0, 0.0)
+        let v4 = pystruct.pack('4f', x2, y1, 1.0, 1.0)
+        let v5 = pystruct.pack('4f', x2, y2, 1.0, 0.0)
+        let data = v0 + v1 + v2 + v3 + v4 + v5
+
+        let ctx = self.app.ctx
+        if self.vbo != None:
+            self.vao.release()
+            self.vbo.release()
+        self.vbo = ctx.buffer(data)
+        let item = builtins.tuple([self.vbo, '2f 2f', 'in_position', 'in_uv'])
+        let content = builtins.list()
+        content.append(item)
+        self.vao = ctx.vertex_array(self.program, content, skip_errors=True)
+
+    fn render(self: &mut HudMesh):
+        let pos = self.app.player.camera.position
+        let fps = self.app.clock.get_fps() as int
+        let px = pos[0] as int
+        let py_v = pos[1] as int
+        let pz = pos[2] as int
+
+        self.surf.fill(pg.Color(0, 0, 0, 0))
+
+        let fps_str = f'FPS: {fps}'
+        let xyz_str = f'X:{px} Y:{py_v} Z:{pz}'
+
+        let black = pg.Color(0, 0, 0)
+        let white = pg.Color(255, 255, 255)
+
+        let s1 = self.font.render(fps_str, True, black)
+        let s2 = self.font.render(xyz_str, True, black)
+        self.surf.blit(s1, pg.Vector2(1.0, 1.0))
+        self.surf.blit(s2, pg.Vector2(1.0, 27.0))
+        let t1 = self.font.render(fps_str, True, white)
+        let t2 = self.font.render(xyz_str, True, white)
+        self.surf.blit(t1, pg.Vector2(0.0, 0.0))
+        self.surf.blit(t2, pg.Vector2(0.0, 26.0))
+
+        let raw = pg.image.tobytes(self.surf, 'RGBA', False)
+        self.texture.write(raw)
+        self.texture.use(location=3)
+        self.vao.render()
+
+    fn on_resize(self: &mut HudMesh):
+        self.rebuild_geo()

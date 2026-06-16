@@ -6,14 +6,14 @@ import py "pygame" as pg
 import py "math" as pymath
 
 struct Camera:
-    position: PyObject
-    yaw: PyObject
-    pitch: PyObject
-    up: PyObject
-    right: PyObject
-    forward: PyObject
-    m_proj: PyObject
-    m_view: PyObject
+    position: glm.vec3
+    yaw: f64
+    pitch: f64
+    up: glm.vec3
+    right: glm.vec3
+    forward: glm.vec3
+    m_proj: glm.mat4
+    m_view: glm.mat4
     frustum: Frustum
     aspect: f64
     fov_deg: f64
@@ -23,23 +23,23 @@ struct Camera:
 impl Camera:
     fn __init__(self, position: PyObject, yaw: f64, pitch: f64):
         self.position = glm.vec3(position)
-        self.yaw = glm.radians(yaw as float)
-        self.pitch = glm.radians(pitch as float)
+        self.yaw = glm.radians(yaw)
+        self.pitch = glm.radians(pitch)
         self.up = glm.vec3(0, 1, 0)
         self.right = glm.vec3(1, 0, 0)
         self.forward = glm.vec3(0, 0, -1)
         let win_size = pg.display.get_surface().get_size()
-        self.aspect = ((win_size[0] as float) as f64) / ((win_size[1] as float) as f64)
-        self.fov_deg = (FOV_DEG as float) as f64
-        self.fov_target = (FOV_DEG as float) as f64
+        self.aspect = (win_size[0] as f64) / (win_size[1] as f64)
+        self.fov_deg = FOV_DEG as f64
+        self.fov_target = FOV_DEG as f64
         self.proj_dirty = False
-        self.m_proj = glm.perspective(glm.radians(self.fov_deg as float), self.aspect as float, (NEAR as float), (FAR as float))
+        self.m_proj = glm.perspective(glm.radians(self.fov_deg), self.aspect, NEAR as f64, FAR as f64)
         self.m_view = glm.mat4()
         self.frustum = Frustum()
 
     fn rebuild_proj(self: &mut Camera):
         let v_fov = self.fov_deg * 0.017453292519943295
-        self.m_proj = glm.perspective(v_fov as float, self.aspect as float, (NEAR as float), (FAR as float))
+        self.m_proj = glm.perspective(v_fov, self.aspect, NEAR as f64, FAR as f64)
         self.frustum.set_fov(v_fov, self.aspect)
         self.proj_dirty = True
 
@@ -92,19 +92,19 @@ impl Camera:
         self.yaw = self.yaw + delta_x
 
     fn move_left(self: &mut Camera, velocity: f64):
-        self.position = self.position - self.right * (velocity as float)
+        self.position = self.position - self.right * velocity
 
     fn move_right(self: &mut Camera, velocity: f64):
-        self.position = self.position + self.right * (velocity as float)
+        self.position = self.position + self.right * velocity
 
     fn move_up(self: &mut Camera, velocity: f64):
-        self.position = self.position + self.up * (velocity as float)
+        self.position = self.position + self.up * velocity
 
     fn move_down(self: &mut Camera, velocity: f64):
-        self.position = self.position - self.up * (velocity as float)
+        self.position = self.position - self.up * velocity
 
     fn move_forward(self: &mut Camera, velocity: f64):
-        self.position = self.position + self.forward * (velocity as float)
+        self.position = self.position + self.forward * velocity
 
     fn move_back(self: &mut Camera, velocity: f64):
-        self.position = self.position - self.forward * (velocity as float)
+        self.position = self.position - self.forward * velocity

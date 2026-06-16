@@ -46,14 +46,14 @@ impl Player:
         self.break_y = 0
         self.break_z = 0
 
-    fn update(self: &mut Player, dt: PyObject):
-        let mut dt_ms = (dt as float) as f64
+    fn update(self: &mut Player, dt: f64):
+        let mut dt_ms = dt
         if dt_ms > MAX_DT_MS:
             dt_ms = MAX_DT_MS
         self.keyboard_control(dt_ms)
         self.mouse_control()
         self.update_breaking(dt_ms)
-        let mut fov = (FOV_DEG as float) as f64
+        let mut fov = FOV_DEG as f64
         if self.shift_down and self.w_down:
             fov = fov * SPRINT_FOV_MULT
         self.camera.fov_target = fov
@@ -123,16 +123,16 @@ impl Player:
 
     fn mouse_control(self: &mut Player):
         let rel = pg.mouse.get_rel()
-        let dx = (rel[0] as float) as f64
-        let dy = (rel[1] as float) as f64
-        let sensitivity = (MOUSE_SENSITIVITY as float) as f64
+        let dx = rel[0] as f64
+        let dy = rel[1] as f64
+        let sensitivity = MOUSE_SENSITIVITY as f64
         self.camera.rotate_yaw(dx * sensitivity)
         self.camera.rotate_pitch(dy * sensitivity)
 
     fn keyboard_control(self: &mut Player, dt_ms: f64):
-        let mut px = (self.camera.position[0] as float) as f64
-        let mut py = (self.camera.position[1] as float) as f64
-        let mut pz = (self.camera.position[2] as float) as f64
+        let mut px = self.camera.position[0] as f64
+        let mut py = self.camera.position[1] as f64
+        let mut pz = self.camera.position[2] as f64
 
         let mut dx = 0.0
         let mut dy = 0.0
@@ -142,11 +142,11 @@ impl Player:
             let mut vel = FLY_SPEED * dt_ms
             if self.shift_down:
                 vel = vel * FLY_SPRINT_MULT
-            let fx = (self.camera.forward[0] as float) as f64
-            let fy = (self.camera.forward[1] as float) as f64
-            let fz = (self.camera.forward[2] as float) as f64
-            let rx = (self.camera.right[0] as float) as f64
-            let rz = (self.camera.right[2] as float) as f64
+            let fx = self.camera.forward[0] as f64
+            let fy = self.camera.forward[1] as f64
+            let fz = self.camera.forward[2] as f64
+            let rx = self.camera.right[0] as f64
+            let rz = self.camera.right[2] as f64
             if self.w_down:
                 dx = dx + fx * vel
                 dy = dy + fy * vel
@@ -168,10 +168,10 @@ impl Player:
             self.velocity_y = 0.0
             self.on_ground = False
         else:
-            let fx = (self.camera.forward[0] as float) as f64
-            let fz = (self.camera.forward[2] as float) as f64
-            let rx = (self.camera.right[0] as float) as f64
-            let rz = (self.camera.right[2] as float) as f64
+            let fx = self.camera.forward[0] as f64
+            let fz = self.camera.forward[2] as f64
+            let rx = self.camera.right[0] as f64
+            let rz = self.camera.right[2] as f64
             let mut flen = math.sqrt(fx * fx + fz * fz)
             if flen < 0.000001:
                 flen = 1.0
