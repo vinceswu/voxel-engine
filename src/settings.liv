@@ -1,20 +1,4 @@
-import py "glm" as glm:
-    type vec2
-    type vec3
-    type mat4
-    type ivec3
-    fn vec2(x: float, y: float) -> vec2
-    fn vec3(x: float, y: float, z: float) -> vec3
-    fn vec3(v: PyObject) -> vec3
-    fn ivec3(x: int, y: int, z: int) -> ivec3
-    fn ivec3(v: PyObject) -> ivec3
-    fn mat4() -> mat4
-    fn perspective(fov: float, aspect: float, near: float, far: float) -> mat4
-    fn lookAt(eye: PyObject, center: PyObject, up: PyObject) -> mat4
-    fn translate(m: PyObject, v: PyObject) -> mat4
-    fn normalize(v: PyObject) -> vec3
-    fn cross(a: PyObject, b: PyObject) -> vec3
-    fn radians(x: float) -> float
+import py "glm" as glm
 import math
 import random
 
