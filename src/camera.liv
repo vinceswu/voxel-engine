@@ -29,11 +29,16 @@ impl Camera:
         self.right = glm.vec3(1, 0, 0)
         self.forward = glm.vec3(0, 0, -1)
         let win_size = pg.display.get_surface().get_size()
-        self.aspect = (win_size[0] as f64) / (win_size[1] as f64)
+        self.aspect = win_size[0] as f64 / win_size[1] as f64
         self.fov_deg = FOV_DEG as f64
         self.fov_target = FOV_DEG as f64
         self.proj_dirty = False
-        self.m_proj = glm.perspective(glm.radians(self.fov_deg), self.aspect, NEAR as f64, FAR as f64)
+        self.m_proj = glm.perspective(
+            glm.radians(self.fov_deg),
+            self.aspect,
+            NEAR as f64,
+            FAR as f64,
+        )
         self.m_view = glm.mat4()
         self.frustum = Frustum()
 
@@ -44,7 +49,7 @@ impl Camera:
         self.proj_dirty = True
 
     fn resize(self: &mut Camera, width: int, height: int):
-        self.aspect = (width as f64) / (height as f64)
+        self.aspect = width as f64 / height as f64
         self.rebuild_proj()
 
     fn update(self: &mut Camera, dt_ms: f64):

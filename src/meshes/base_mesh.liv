@@ -10,7 +10,15 @@ struct BaseMesh:
     vbo: PyObject
 
 impl BaseMesh:
-    fn __init__(self, ctx: PyObject, program: PyObject, vbo_format: str, vertex_data: bytes, attr1: str, attr2: str):
+    fn __init__(
+        self,
+        ctx: PyObject,
+        program: PyObject,
+        vbo_format: str,
+        vertex_data: bytes,
+        attr1: str,
+        attr2: str,
+    ):
         self.ctx = ctx
         self.program = program
         self.vbo_format = vbo_format
@@ -21,6 +29,7 @@ impl BaseMesh:
 
     fn create_vao(self: &mut BaseMesh) -> PyObject:
         let mut item: PyObject = None
+
         if self.attr2 != '':
             item = builtins.tuple([self.vbo, self.vbo_format, self.attr1, self.attr2])
         else:

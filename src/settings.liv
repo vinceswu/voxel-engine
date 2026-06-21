@@ -16,9 +16,9 @@ const MAX_RAY_DIST: u8 = 10
 
 const CHUNK_SIZE: u8 = 48
 const H_CHUNK_SIZE: u8 = CHUNK_SIZE / 2
-const CHUNK_AREA: u16 = (CHUNK_SIZE as u16) * (CHUNK_SIZE as u16)
-const CHUNK_VOL: u32 = (CHUNK_AREA as u32) * (CHUNK_SIZE as u32)
-const CHUNK_SPHERE_RADIUS: f32 = ((H_CHUNK_SIZE as float) * math.sqrt(3.0)) as f32
+const CHUNK_AREA: u16 = CHUNK_SIZE as u16 * CHUNK_SIZE as u16
+const CHUNK_VOL: u32 = CHUNK_AREA as u32 * CHUNK_SIZE as u32
+const CHUNK_SPHERE_RADIUS: f32 = (H_CHUNK_SIZE as float * math.sqrt(3.0)) as f32
 
 const WORLD_H: u8 = 2
 const CENTER_Y: u8 = WORLD_H * H_CHUNK_SIZE
@@ -29,12 +29,12 @@ const UNLOAD_DIST: u8 = LOAD_DIST + 2
 const GEN_BUDGET: u8 = 1
 const MESH_BUDGET: u8 = 1
 
-const FOG_DENSITY: f64 = 4.32 / (((RENDER_DIST as float) * (CHUNK_SIZE as float)) ** 2.0)
+const FOG_DENSITY: f64 = 4.32 / (RENDER_DIST as float * CHUNK_SIZE as float) ** 2.0
 
-const ASPECT_RATIO: f32 = (WIN_RES.x as f32) / (WIN_RES.y as f32)
+const ASPECT_RATIO: f32 = WIN_RES.x as f32 / WIN_RES.y as f32
 const FOV_DEG: f32 = 50.0
 const V_FOV: f32 = glm.radians(FOV_DEG as float) as f32
-const H_FOV: f32 = (2.0 * math.atan(math.tan((V_FOV as float) * 0.5) * (ASPECT_RATIO as float))) as f32
+const H_FOV: f32 = (2.0 * math.atan(math.tan(V_FOV as float * 0.5) * ASPECT_RATIO as float)) as f32
 const NEAR: f32 = 0.1
 const FAR: f32 = 2000.0
 const PITCH_MAX: f32 = glm.radians(90.0) as f32

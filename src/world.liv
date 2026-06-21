@@ -80,10 +80,12 @@ impl World:
         self.last_pcx = pcx
         self.last_pcz = pcz
         self.scan_load(pcx, pcz)
+
         while self.gen_head != self.gen_tail:
             self.gen_step()
             pg.event.pump()
         self.scan_mesh(pcx, pcz)
+
         while self.mesh_head != self.mesh_tail:
             self.mesh_step()
             pg.event.pump()
@@ -94,10 +96,11 @@ impl World:
         self.stream()
 
     fn stream(self: &mut World):
-        let cam_x = (self.app.player.camera.position[0] as float) as f64
-        let cam_z = (self.app.player.camera.position[2] as float) as f64
+        let cam_x = self.app.player.camera.position[0] as float as f64
+        let cam_z = self.app.player.camera.position[2] as float as f64
         let pcx = chunk_coord(floor_to_int(cam_x))
         let pcz = chunk_coord(floor_to_int(cam_z))
+
         if pcx != self.last_pcx or pcz != self.last_pcz:
             self.last_pcx = pcx
             self.last_pcz = pcz
@@ -105,27 +108,32 @@ impl World:
             self.scan_load(pcx, pcz)
             self.scan_mesh(pcx, pcz)
         let mut g = 0
-        while g < (GEN_BUDGET as int) and self.gen_head != self.gen_tail:
+
+        while g < GEN_BUDGET as int and self.gen_head != self.gen_tail:
             self.gen_step()
             g = g + 1
         let mut m = 0
-        while m < (MESH_BUDGET as int) and self.mesh_head != self.mesh_tail:
+
+        while m < MESH_BUDGET as int and self.mesh_head != self.mesh_tail:
             self.mesh_step()
             m = m + 1
 
     fn scan_load(self: &mut World, pcx: int, pcz: int):
         let r_max = LOAD_DIST as int
         let mut r = 0
+
         while r <= r_max:
             if r == 0:
                 self.try_queue_gen(pcx, pcz)
             else:
                 let mut x = -r
+
                 while x <= r:
                     self.try_queue_gen(pcx + x, pcz - r)
                     self.try_queue_gen(pcx + x, pcz + r)
                     x = x + 1
                 let mut z = -r + 1
+
                 while z <= r - 1:
                     self.try_queue_gen(pcx - r, pcz + z)
                     self.try_queue_gen(pcx + r, pcz + z)
@@ -135,16 +143,19 @@ impl World:
     fn scan_mesh(self: &mut World, pcx: int, pcz: int):
         let r_max = RENDER_DIST as int
         let mut r = 0
+
         while r <= r_max:
             if r == 0:
                 self.try_queue_mesh(pcx, pcz)
             else:
                 let mut x = -r
+
                 while x <= r:
                     self.try_queue_mesh(pcx + x, pcz - r)
                     self.try_queue_mesh(pcx + x, pcz + r)
                     x = x + 1
                 let mut z = -r + 1
+
                 while z <= r - 1:
                     self.try_queue_mesh(pcx - r, pcz + z)
                     self.try_queue_mesh(pcx + r, pcz + z)
@@ -155,9 +166,12 @@ impl World:
         if self.gen_tail - self.gen_head >= Q_CAP:
             return
         let key = pack_key(cx, cz)
+
         if self.map.get(key) != -1:
             return
+
         let col = self.alloc_col(key)
+
         // Queued columns are stored negated so map users can tell them
         // apart from generated ones by sign.
         self.map.set(key, -(col + 2))
@@ -167,21 +181,27 @@ impl World:
     fn try_queue_mesh(self: &mut World, cx: int, cz: int):
         if self.mesh_tail - self.mesh_head >= Q_CAP:
             return
+
         let col = self.map.get(pack_key(cx, cz))
         if col < 0:
             return
+
         if self.col_state[col] != COL_GENERATED:
             return
+
         if self.neighbors_generated(cx, cz) == False:
             return
+
         self.col_state[col] = COL_MESH_QUEUED
         self.mesh_queue[self.mesh_tail & Q_MASK] = col
         self.mesh_tail = self.mesh_tail + 1
 
     fn neighbors_generated(self: &World, cx: int, cz: int) -> bool:
         let mut dz = -1
+
         while dz <= 1:
             let mut dx = -1
+
             while dx <= 1:
                 if dx != 0 or dz != 0:
                     if self.map.get(pack_key(cx + dx, cz + dz)) < 0:
@@ -194,11 +214,14 @@ impl World:
         let key = self.gen_queue[self.gen_head & Q_MASK]
         self.gen_head = self.gen_head + 1
         let e = self.map.get(key)
+
         if e >= -1:
             return
         let col = -e - 2
+
         if self.col_state[col] != COL_GEN_QUEUED or self.col_keys[col] != key:
             return
+
         let cx = key_cx(key)
         let cz = key_cz(key)
         self.gen_column(col, cx, cz)
@@ -209,17 +232,22 @@ impl World:
     fn mesh_check_around(self: &mut World, cx: int, cz: int):
         let r = RENDER_DIST as int
         let mut dz = -1
+
         while dz <= 1:
             let mut dx = -1
+
             while dx <= 1:
                 let ncx = cx + dx
                 let ncz = cz + dz
                 let mut ax = ncx - self.last_pcx
+
                 if ax < 0:
                     ax = -ax
+
                 let mut az = ncz - self.last_pcz
                 if az < 0:
                     az = -az
+
                 if ax <= r and az <= r:
                     self.try_queue_mesh(ncx, ncz)
                 dx = dx + 1
@@ -228,8 +256,10 @@ impl World:
     fn mesh_step(self: &mut World):
         let col = self.mesh_queue[self.mesh_head & Q_MASK]
         self.mesh_head = self.mesh_head + 1
+
         if self.col_state[col] != COL_MESH_QUEUED:
             return
+
         let key = self.col_keys[col]
         self.mesh_column(col, key_cx(key), key_cz(key))
         self.col_state[col] = COL_MESHED
@@ -237,14 +267,18 @@ impl World:
     fn unload_far(self: &mut World, pcx: int, pcz: int):
         let limit = UNLOAD_DIST as int
         let mut col = 0
+
         while col < self.col_used:
             let st = self.col_state[col]
+
             if st != COL_FREE:
                 let key = self.col_keys[col]
                 let mut dx = key_cx(key) - pcx
+
                 if dx < 0:
                     dx = -dx
                 let mut dz = key_cz(key) - pcz
+
                 if dz < 0:
                     dz = -dz
                 if dx > limit or dz > limit:
@@ -259,6 +293,7 @@ impl World:
 
     fn alloc_col(self: &mut World, key: int) -> int:
         let mut col = -1
+
         if self.free_count > 0:
             self.free_count = self.free_count - 1
             col = self.free_cols[self.free_count]
@@ -269,6 +304,7 @@ impl World:
             self.col_used = self.col_used + 1
             let wh = WORLD_H as int
             let mut cy = 0
+
             while cy < wh:
                 let slot = col * wh + cy
                 self.voxels[slot] = bytes_new(CHUNK_VOL as int)
@@ -284,6 +320,7 @@ impl World:
         let wh = WORLD_H as int
         let old_cap = self.col_cap
         let new_cap = old_cap * 2
+
         let mut nchunks: [Chunk] = list_new(new_cap * wh)
         let mut nvoxels: [bytes] = list_new(new_cap * wh)
         let mut nkeys: [int] = list_new(new_cap)
@@ -291,17 +328,20 @@ impl World:
         let mut nedited: [int] = list_new(new_cap)
         let mut nfree: [int] = list_new(new_cap)
         let mut i = 0
+
         while i < old_cap * wh:
             nchunks[i] = self.chunks[i]
             nvoxels[i] = self.voxels[i]
             i = i + 1
         i = 0
+
         while i < old_cap:
             nkeys[i] = self.col_keys[i]
             nstate[i] = self.col_state[i]
             nedited[i] = self.col_edited[i]
             i = i + 1
         i = 0
+
         while i < self.free_count:
             nfree[i] = self.free_cols[i]
             i = i + 1
@@ -312,9 +352,11 @@ impl World:
         self.col_edited = nedited
         self.free_cols = nfree
         self.col_cap = new_cap
+
         // The voxel list was replaced; re-point every stored reference.
         self.voxel_handler.world_voxels = &mut self.voxels
         i = 0
+
         while i < self.col_used * wh:
             let chunk_ref = &mut self.chunks[i]
             chunk_ref.world_voxels = &mut self.voxels
@@ -328,22 +370,33 @@ impl World:
         let wx0 = cx * cs
         let wz0 = cz * cs
         let mut x = 0
+
         while x < cs:
             let mut z = 0
+
             while z < cs:
                 self.heights[x + cs * z] = get_height(&self.noise, wx0 + x, wz0 + z)
                 z = z + 1
             x = x + 1
         let mut cy = 0
+
         while cy < wh:
             let slot = col * wh + cy
             let chunk_ref = &mut self.chunks[slot]
             chunk_ref.reset(cx, cy, cz)
             cy = cy + 1
         cy = 0
+
         while cy < wh:
             let slot = col * wh + cy
-            let solid = fill_chunk(&self.noise, &mut self.voxels[slot], &self.heights, wx0, cy * cs, wz0)
+            let solid = fill_chunk(
+                &self.noise,
+                &mut self.voxels[slot],
+                &self.heights,
+                wx0,
+                cy * cs,
+                wz0,
+            )
             if solid != 0:
                 let chunk_ref = &mut self.chunks[slot]
                 chunk_ref.is_empty = False
@@ -352,13 +405,16 @@ impl World:
     fn fill_mesh_slots(self: &mut World, cx: int, cy: int, cz: int):
         let wh = WORLD_H as int
         let mut dcy = -1
+
         while dcy <= 1:
             let ncy = cy + dcy
             let mut dcz = -1
+
             while dcz <= 1:
                 let mut dcx = -1
+
                 while dcx <= 1:
-                    let idx = (dcx + 1) + 3 * (dcz + 1) + 9 * (dcy + 1)
+                    let idx = dcx + 1 + 3 * (dcz + 1) + 9 * (dcy + 1)
                     let mut s = -1
                     if ncy >= 0 and ncy < wh:
                         let e = self.map.get(pack_key(cx + dcx, cz + dcz))
@@ -404,18 +460,21 @@ impl World:
         self.voxel_handler.rebuild_count = 0
 
     fn render(self: &World):
-        let px = (self.app.player.camera.position[0] as float) as f64
-        let py = (self.app.player.camera.position[1] as float) as f64
-        let pz = (self.app.player.camera.position[2] as float) as f64
-        let fx = (self.app.player.camera.forward[0] as float) as f64
-        let fy = (self.app.player.camera.forward[1] as float) as f64
-        let fz = (self.app.player.camera.forward[2] as float) as f64
-        let ux = (self.app.player.camera.up[0] as float) as f64
-        let uy = (self.app.player.camera.up[1] as float) as f64
-        let uz = (self.app.player.camera.up[2] as float) as f64
-        let rx = (self.app.player.camera.right[0] as float) as f64
-        let ry = (self.app.player.camera.right[1] as float) as f64
-        let rz = (self.app.player.camera.right[2] as float) as f64
+        let px = self.app.player.camera.position[0] as float as f64
+        let py = self.app.player.camera.position[1] as float as f64
+        let pz = self.app.player.camera.position[2] as float as f64
+
+        let fx = self.app.player.camera.forward[0] as float as f64
+        let fy = self.app.player.camera.forward[1] as float as f64
+        let fz = self.app.player.camera.forward[2] as float as f64
+
+        let ux = self.app.player.camera.up[0] as float as f64
+        let uy = self.app.player.camera.up[1] as float as f64
+        let uz = self.app.player.camera.up[2] as float as f64
+
+        let rx = self.app.player.camera.right[0] as float as f64
+        let ry = self.app.player.camera.right[1] as float as f64
+        let rz = self.app.player.camera.right[2] as float as f64
         let wh = WORLD_H as int
         let mut col = 0
 
@@ -427,7 +486,23 @@ impl World:
                     let chunk_ref = &self.chunks[col * wh + cy]
 
                     if chunk_ref.is_empty == False:
-                        if self.app.player.camera.frustum.is_on_frustum(chunk_ref.center_x, chunk_ref.center_y, chunk_ref.center_z, px, py, pz, fx, fy, fz, ux, uy, uz, rx, ry, rz):
+                        if self.app.player.camera.frustum.is_on_frustum(
+                            chunk_ref.center_x,
+                            chunk_ref.center_y,
+                            chunk_ref.center_z,
+                            px,
+                            py,
+                            pz,
+                            fx,
+                            fy,
+                            fz,
+                            ux,
+                            uy,
+                            uz,
+                            rx,
+                            ry,
+                            rz,
+                        ):
                             chunk_ref.render()
                     cy = cy + 1
             col = col + 1

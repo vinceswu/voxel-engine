@@ -13,31 +13,152 @@ impl HotbarMesh:
     fn get_vertex_data(self: &HotbarMesh) -> bytes:
         let mut out = bytes_new(0)
         let mut slot = 0
+
         while slot < 7:
             let x0 = 1 + slot * 14
 
             // slot frame
-            push_quad(&mut out, x0, 1, 0, 0, x0 + 12, 1, 1, 0, x0 + 12, 13, 1, 1, x0, 13, 0, 1, 0, slot)
+            push_quad(
+                &mut out,
+                x0,
+                1,
+                0,
+                0,
+                x0 + 12,
+                1,
+                1,
+                0,
+                x0 + 12,
+                13,
+                1,
+                1,
+                x0,
+                13,
+                0,
+                1,
+                0,
+                slot,
+            )
 
             // selector overlay, drawn only when this slot is selected
-            push_quad(&mut out, x0 - 1, 0, 0, 0, x0 + 13, 0, 1, 0, x0 + 13, 14, 1, 1, x0 - 1, 14, 0, 1, 1, slot)
+            push_quad(
+                &mut out,
+                x0 - 1,
+                0,
+                0,
+                0,
+                x0 + 13,
+                0,
+                1,
+                0,
+                x0 + 13,
+                14,
+                1,
+                1,
+                x0 - 1,
+                14,
+                0,
+                1,
+                1,
+                slot,
+            )
             let id = slot + 1
 
             // top face: T, TL, C, TR diamond
-            push_quad(&mut out, x0 + 6, 12, 1, 1, x0 + 2, 10, 0, 1, x0 + 6, 8, 0, 0, x0 + 10, 10, 1, 0, 8 + id, slot)
+            push_quad(
+                &mut out,
+                x0 + 6,
+                12,
+                1,
+                1,
+                x0 + 2,
+                10,
+                0,
+                1,
+                x0 + 6,
+                8,
+                0,
+                0,
+                x0 + 10,
+                10,
+                1,
+                0,
+                8 + id,
+                slot,
+            )
 
             // left face: TL, BL, Bm, C (texture rows start at v=0, so v=0 is up)
-            push_quad(&mut out, x0 + 2, 10, 0, 0, x0 + 2, 4, 0, 1, x0 + 6, 2, 1, 1, x0 + 6, 8, 1, 0, 16 + id, slot)
+            push_quad(
+                &mut out,
+                x0 + 2,
+                10,
+                0,
+                0,
+                x0 + 2,
+                4,
+                0,
+                1,
+                x0 + 6,
+                2,
+                1,
+                1,
+                x0 + 6,
+                8,
+                1,
+                0,
+                16 + id,
+                slot,
+            )
 
             // right face: C, Bm, BR, TR
-            push_quad(&mut out, x0 + 6, 8, 0, 0, x0 + 6, 2, 0, 1, x0 + 10, 4, 1, 1, x0 + 10, 10, 1, 0, 24 + id, slot)
+            push_quad(
+                &mut out,
+                x0 + 6,
+                8,
+                0,
+                0,
+                x0 + 6,
+                2,
+                0,
+                1,
+                x0 + 10,
+                4,
+                1,
+                1,
+                x0 + 10,
+                10,
+                1,
+                0,
+                24 + id,
+                slot,
+            )
             slot = slot + 1
         out
 
     fn render(self: &HotbarMesh):
         self.base.render()
 
-fn push_quad(out: &mut bytes, ax: int, ay: int, au: int, av: int, bx: int, by: int, bu: int, bv: int, cx: int, cy: int, cu: int, cv: int, dx: int, dy: int, du: int, dv: int, z: int, slot: int):
+fn push_quad(
+    out: &mut bytes,
+    ax: int,
+    ay: int,
+    au: int,
+    av: int,
+    bx: int,
+    by: int,
+    bu: int,
+    bv: int,
+    cx: int,
+    cy: int,
+    cu: int,
+    cv: int,
+    dx: int,
+    dy: int,
+    du: int,
+    dv: int,
+    z: int,
+    slot: int,
+):
     push_vert(out, ax, ay, au, av, z, slot)
     push_vert(out, bx, by, bu, bv, z, slot)
     push_vert(out, cx, cy, cu, cv, z, slot)

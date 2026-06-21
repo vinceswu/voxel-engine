@@ -37,6 +37,7 @@ impl VoxelEngine:
 
         pg.display.set_mode(WIN_RES, flags=pg.OPENGL | pg.DOUBLEBUF | pg.RESIZABLE)
         self.ctx = mgl.create_context()
+
         let res = WIN_RES
         self.win_width = res.x as int
         self.win_height = res.y as int
@@ -67,24 +68,25 @@ impl VoxelEngine:
         self.scene = Scene(&mut self)
 
         let sx = H_CHUNK_SIZE as int
-        let mut sy = (WORLD_H as int) * (CHUNK_SIZE as int) - 1
+        let mut sy = WORLD_H as int * CHUNK_SIZE as int - 1
 
         while sy > 0 and self.scene.world.voxel_handler.is_solid(sx, sy, sx) == False:
             sy = sy - 1
 
-        self.player_camera.position = glm.vec3(sx, ((sy + 1) as f64) + EYE_HEIGHT + 0.001, sx)
+        self.player_camera.position = glm.vec3(sx, (sy + 1) as f64 + EYE_HEIGHT + 0.001, sx)
 
     fn update(self: &mut VoxelEngine):
         self.delta_time = self.clock.tick(FPS)
         self.player.update(self.delta_time)
         self.shader_program.update()
         self.scene.update()
-        self.time = (pg.time.get_ticks() as float) * 0.001
+        self.time = pg.time.get_ticks() as float * 0.001
         pg.display.set_caption(f'{self.clock.get_fps()}')
 
     fn render(self: &mut VoxelEngine):
         self.ctx.clear(0.58, 0.83, 0.99, 1.0, 1.0)
         self.scene.render()
+
         if self.screenshot_requested:
             self.save_screenshot()
             self.screenshot_requested = False
@@ -92,7 +94,7 @@ impl VoxelEngine:
 
     fn handle_events(self: &mut VoxelEngine):
         for event in pg.event.get():
-            if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
+            if event.type == pg.QUIT or event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
                 self.is_running = False
             if event.type == pg.KEYDOWN and event.key == pg.K_F12:
                 self.screenshot_requested = True
@@ -113,11 +115,15 @@ impl VoxelEngine:
         let width = self.win_width
         let height = self.win_height
         let pixels = self.ctx.screen.read(viewport=(0, 0, width, height), alignment=1)
+
         import py "PIL.Image" as Image
+
         let image = Image.frombytes('RGB', (width, height), pixels)
         let image = image.transpose(Image.FLIP_TOP_BOTTOM)
         image.save('screenshot.png')
-        sys.stdout.write("Screenshot saved.\n"); sys.stdout.flush()
+
+        sys.stdout.write("Screenshot saved.\n")
+        sys.stdout.flush()
 
     fn run(self: &mut VoxelEngine):
         while self.is_running:

@@ -20,8 +20,10 @@ impl CloudMesh:
 
         let mut occ = bytes_new(width * depth)
         let mut z = 0
+
         while z < depth:
             let mut x = 0
+
             while x < width:
                 if noise2(noise, x as float * scale, z as float * scale) >= threshold:
                     occ[z * width + x] = 1
@@ -29,39 +31,59 @@ impl CloudMesh:
             z = z + 1
 
         let y0 = CLOUD_HEIGHT as int
-        let y1 = y0 + (CLOUD_THICKNESS as int)
+        let y1 = y0 + CLOUD_THICKNESS as int
 
         // Greedy row runs: one top/bottom/x-side quad per run of filled
         // cells; z-side quads merged over sub-runs with an empty neighbor
         // row. Interior faces are never emitted.
         let mut out = bytes_new(0)
         let mut rz = 0
+
         while rz < depth:
             let rz1 = rz + 1
             let row = rz * width
             let mut x = 0
+
             while x < width:
                 if occ[row + x] == 1:
                     let x0 = x
+
                     while x < width and occ[row + x] == 1:
                         x = x + 1
                     let x1 = x
 
                     // top (+y) and bottom (-y)
-                    push_cloud_quad(&mut out, x0,y1,rz, x0,y1,rz1, x1,y1,rz1, x1,y1,rz, 255)
-                    push_cloud_quad(&mut out, x0,y0,rz, x1,y0,rz, x1,y0,rz1, x0,y0,rz1, 178)
+                    push_cloud_quad(&mut out, x0, y1, rz, x0, y1, rz1, x1, y1, rz1, x1, y1, rz, 255)
+                    push_cloud_quad(&mut out, x0, y0, rz, x1, y0, rz, x1, y0, rz1, x0, y0, rz1, 178)
+
                     // run ends (-x / +x)
-                    push_cloud_quad(&mut out, x0,y0,rz, x0,y0,rz1, x0,y1,rz1, x0,y1,rz, 204)
-                    push_cloud_quad(&mut out, x1,y0,rz, x1,y1,rz, x1,y1,rz1, x1,y0,rz1, 204)
+                    push_cloud_quad(&mut out, x0, y0, rz, x0, y0, rz1, x0, y1, rz1, x0, y1, rz, 204)
+                    push_cloud_quad(&mut out, x1, y0, rz, x1, y1, rz, x1, y1, rz1, x1, y0, rz1, 204)
 
                     // -z faces where the previous row is empty
                     let mut sx = x0
                     while sx < x1:
                         if rz == 0 or occ[row - width + sx] == 0:
                             let s0 = sx
+
                             while sx < x1 and (rz == 0 or occ[row - width + sx] == 0):
                                 sx = sx + 1
-                            push_cloud_quad(&mut out, s0,y0,rz, s0,y1,rz, sx,y1,rz, sx,y0,rz, 229)
+                            push_cloud_quad(
+                                &mut out,
+                                s0,
+                                y0,
+                                rz,
+                                s0,
+                                y1,
+                                rz,
+                                sx,
+                                y1,
+                                rz,
+                                sx,
+                                y0,
+                                rz,
+                                229,
+                            )
                         else:
                             sx = sx + 1
                     // +z faces where the next row is empty
@@ -69,9 +91,25 @@ impl CloudMesh:
                     while sx < x1:
                         if rz1 == depth or occ[row + width + sx] == 0:
                             let s0 = sx
+
                             while sx < x1 and (rz1 == depth or occ[row + width + sx] == 0):
                                 sx = sx + 1
-                            push_cloud_quad(&mut out, s0,y0,rz1, sx,y0,rz1, sx,y1,rz1, s0,y1,rz1, 229)
+                            push_cloud_quad(
+                                &mut out,
+                                s0,
+                                y0,
+                                rz1,
+                                sx,
+                                y0,
+                                rz1,
+                                sx,
+                                y1,
+                                rz1,
+                                s0,
+                                y1,
+                                rz1,
+                                229,
+                            )
                         else:
                             sx = sx + 1
                 else:
@@ -81,7 +119,22 @@ impl CloudMesh:
 
 // Quad corners must arrive in CCW order seen from outside the box;
 // clouds render with backface culling enabled.
-fn push_cloud_quad(out: &mut bytes, ax: int, ay: int, az: int, bx: int, by: int, bz: int, cx: int, cy: int, cz: int, dx: int, dy: int, dz: int, shade: int):
+fn push_cloud_quad(
+    out: &mut bytes,
+    ax: int,
+    ay: int,
+    az: int,
+    bx: int,
+    by: int,
+    bz: int,
+    cx: int,
+    cy: int,
+    cz: int,
+    dx: int,
+    dy: int,
+    dz: int,
+    shade: int,
+):
     push_cloud_vert(out, ax, ay, az, shade)
     push_cloud_vert(out, bx, by, bz, shade)
     push_cloud_vert(out, cx, cy, cz, shade)

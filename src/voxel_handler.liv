@@ -4,12 +4,12 @@ from chunk_map import ChunkMap, chunk_coord, pack_key
 import py "glm" as glm
 
 fn loaded_slot(map: &ChunkMap, wx: int, wy: int, wz: int) -> int:
-    if wy < 0 or wy >= (WORLD_H as int) * (CHUNK_SIZE as int):
+    if wy < 0 or wy >= WORLD_H as int * CHUNK_SIZE as int:
         return -1
     let col = map.get(pack_key(chunk_coord(wx), chunk_coord(wz)))
     if col < 0:
         return -1
-    col * (WORLD_H as int) + wy / (CHUNK_SIZE as int)
+    col * WORLD_H as int + wy / CHUNK_SIZE as int
 
 struct VoxelHandler:
     app: &mut VoxelEngine
@@ -50,7 +50,7 @@ impl VoxelHandler:
         if wy < 0:
             return True
 
-        if wy >= (WORLD_H as int) * (CHUNK_SIZE as int):
+        if wy >= WORLD_H as int * CHUNK_SIZE as int:
             return False
 
         let slot = loaded_slot(self.map, wx, wy, wz)
@@ -62,7 +62,7 @@ impl VoxelHandler:
         let lx = wx - chunk_coord(wx) * cs
         let ly = wy % cs
         let lz = wz - chunk_coord(wz) * cs
-        self.world_voxels[slot][lx + cs * lz + (CHUNK_AREA as int) * ly] as int != 0
+        self.world_voxels[slot][lx + cs * lz + CHUNK_AREA as int * ly] as int != 0
 
     fn queue_rebuild(self: &mut VoxelHandler, chunk_slot: int):
         let mut i = 0
@@ -93,7 +93,7 @@ impl VoxelHandler:
         let lx = wx - chunk_coord(wx) * cs
         let ly = wy % cs
         let lz = wz - chunk_coord(wz) * cs
-        let voxel_index = lx + cs * lz + (CHUNK_AREA as int) * ly
+        let voxel_index = lx + cs * lz + CHUNK_AREA as int * ly
 
         if self.world_voxels[slot][voxel_index] as int == 0:
             self.world_voxels[slot][voxel_index] = self.new_voxel_id
@@ -123,23 +123,23 @@ impl VoxelHandler:
 
         if lx == 0:
             self.rebuild_adj_chunk(wx - 1, wy, wz)
-        elif lx == (CHUNK_SIZE as int) - 1:
+        elif lx == CHUNK_SIZE as int - 1:
             self.rebuild_adj_chunk(wx + 1, wy, wz)
 
         if ly == 0:
             self.rebuild_adj_chunk(wx, wy - 1, wz)
-        elif ly == (CHUNK_SIZE as int) - 1:
+        elif ly == CHUNK_SIZE as int - 1:
             self.rebuild_adj_chunk(wx, wy + 1, wz)
 
         if lz == 0:
             self.rebuild_adj_chunk(wx, wy, wz - 1)
-        elif lz == (CHUNK_SIZE as int) - 1:
+        elif lz == CHUNK_SIZE as int - 1:
             self.rebuild_adj_chunk(wx, wy, wz + 1)
 
     fn ray_cast(self: &mut VoxelHandler) -> bool:
         let cam_pos = self.app.player.camera.position
         let forward = self.app.player.camera.forward
-        let end_pos = cam_pos + forward * (MAX_RAY_DIST as float)
+        let end_pos = cam_pos + forward * MAX_RAY_DIST as float
 
         let x1 = cam_pos[0] as float
         let y1 = cam_pos[1] as float
@@ -149,7 +149,11 @@ impl VoxelHandler:
         let y2 = end_pos[1] as float
         let z2 = end_pos[2] as float
 
-        let mut current_voxel_pos = glm.ivec3(int(glm.floor(x1)), int(glm.floor(y1)), int(glm.floor(z1)))
+        let mut current_voxel_pos = glm.ivec3(
+            int(glm.floor(x1)),
+            int(glm.floor(y1)),
+            int(glm.floor(z1)),
+        )
         self.voxel_id = 0
         self.voxel_normal = glm.ivec3(0)
         let mut step_dir = -1
@@ -160,6 +164,7 @@ impl VoxelHandler:
             delta_x = min(dx / (x2 - x1), 10000000.0)
         else:
             delta_x = 10000000.0
+
         let mut max_x: float = 0.0
         if dx > 0:
             max_x = delta_x * (1.0 - glm.fract(x1))
@@ -172,6 +177,7 @@ impl VoxelHandler:
             delta_y = min(dy / (y2 - y1), 10000000.0)
         else:
             delta_y = 10000000.0
+
         let mut max_y: float = 0.0
         if dy > 0:
             max_y = delta_y * (1.0 - glm.fract(y1))
@@ -184,6 +190,7 @@ impl VoxelHandler:
             delta_z = min(dz / (z2 - z1), 10000000.0)
         else:
             delta_z = 10000000.0
+
         let mut max_z: float = 0.0
         if dz > 0:
             max_z = delta_z * (1.0 - glm.fract(z1))
@@ -247,7 +254,7 @@ impl VoxelHandler:
             let ly = wy % cs
             let lz = wz - chunk_coord(wz) * cs
 
-            let voxel_index = lx + cs * lz + (CHUNK_AREA as int) * ly
+            let voxel_index = lx + cs * lz + CHUNK_AREA as int * ly
             let voxel_id = self.world_voxels[slot][voxel_index]
 
             return (voxel_id, voxel_index, (lx, ly, lz), slot)

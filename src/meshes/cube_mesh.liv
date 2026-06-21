@@ -8,34 +8,91 @@ impl CubeMesh:
         let ctx = app.ctx
         let program = app.shader_program.voxel_marker
         let vertex_data = self.get_vertex_data()
+
         self.base = BaseMesh(ctx, program, '2f2 3f2', vertex_data, 'in_tex_coord_0', 'in_position')
 
     fn get_vertex_data(self: &CubeMesh) -> bytes:
-        let vertices = [
-            0,0,1, 1,0,1, 1,1,1, 0,1,1,
-            0,1,0, 0,0,0, 1,0,0, 1,1,0
-        ]
+        let vertices = [0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0]
         let indices = [
-            0,2,3, 0,1,2,
-            1,7,2, 1,6,7,
-            6,5,4, 4,7,6,
-            3,4,5, 3,5,0,
-            3,7,4, 3,2,7,
-            0,6,1, 0,5,6
+            0,
+            2,
+            3,
+            0,
+            1,
+            2,
+            1,
+            7,
+            2,
+            1,
+            6,
+            7,
+            6,
+            5,
+            4,
+            4,
+            7,
+            6,
+            3,
+            4,
+            5,
+            3,
+            5,
+            0,
+            3,
+            7,
+            4,
+            3,
+            2,
+            7,
+            0,
+            6,
+            1,
+            0,
+            5,
+            6,
         ]
-        let tex_coords = [
-            0,0, 1,0, 1,1, 0,1
-        ]
+        let tex_coords = [0, 0, 1, 0, 1, 1, 0, 1]
         let tex_indices = [
-            0,2,3, 0,1,2,
-            0,2,3, 0,1,2,
-            0,1,2, 2,3,0,
-            2,3,0, 2,0,1,
-            0,2,3, 0,1,2,
-            3,1,2, 3,0,1
+            0,
+            2,
+            3,
+            0,
+            1,
+            2,
+            0,
+            2,
+            3,
+            0,
+            1,
+            2,
+            0,
+            1,
+            2,
+            2,
+            3,
+            0,
+            2,
+            3,
+            0,
+            2,
+            0,
+            1,
+            0,
+            2,
+            3,
+            0,
+            1,
+            2,
+            3,
+            1,
+            2,
+            3,
+            0,
+            1,
         ]
         let mut out = bytes_new(0)
         let mut i = 0
+
         while i < 36:
             let ti = tex_indices[i]
             push_f16(&mut out, tex_coords[ti * 2])

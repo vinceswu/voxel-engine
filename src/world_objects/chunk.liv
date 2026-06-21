@@ -41,7 +41,7 @@ impl Chunk:
         let px = self.position[0] as float
         let py_f = self.position[1] as float
         let pz = self.position[2] as float
-        glm.translate(glm.mat4(), glm.vec3(px, py_f, pz) * (CHUNK_SIZE as float))
+        glm.translate(glm.mat4(), glm.vec3(px, py_f, pz) * CHUNK_SIZE as float)
 
     fn set_uniform(self: &Chunk):
         self.mesh.base.program['m_model'].write(self.m_model)

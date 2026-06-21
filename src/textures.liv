@@ -11,13 +11,13 @@ fn load_texture(ctx: PyObject, file_name: str, is_tex_array: bool) -> PyObject:
         result = ctx.texture_array(
             size=(texture.get_width(), int(texture.get_height() / num_layers), num_layers),
             components=4,
-            data=pg.image.tostring(texture, 'RGBA')
+            data=pg.image.tostring(texture, 'RGBA'),
         )
     else:
         result = ctx.texture(
             size=texture.get_size(),
             components=4,
-            data=pg.image.tostring(texture, 'RGBA', False)
+            data=pg.image.tostring(texture, 'RGBA', False),
         )
 
     result.anisotropy = 32.0

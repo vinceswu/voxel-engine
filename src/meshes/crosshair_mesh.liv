@@ -15,12 +15,46 @@ impl CrosshairMesh:
         // shader. Vertical bar split around the center so the inverse-color
         // blend never draws the same pixel twice.
         let rows = [
-            0,8,   18,8,  18,10,  0,8,   18,10,  0,10,
-            8,0,   10,0,  10,8,   8,0,   10,8,   8,8,
-            8,10,  10,10, 10,18,  8,10,  10,18,  8,18
+            0,
+            8,
+            18,
+            8,
+            18,
+            10,
+            0,
+            8,
+            18,
+            10,
+            0,
+            10,
+            8,
+            0,
+            10,
+            0,
+            10,
+            8,
+            8,
+            0,
+            10,
+            8,
+            8,
+            8,
+            8,
+            10,
+            10,
+            10,
+            10,
+            18,
+            8,
+            10,
+            10,
+            18,
+            8,
+            18,
         ]
         let mut out = bytes_new(0)
         let mut i = 0
+
         while i < len(rows):
             bytes_push(out, rows[i])
             i = i + 1

@@ -38,10 +38,12 @@ fn noise_init(seed: int) -> NoiseState:
     while i >= 0:
         s = s * 6364136223846793005 + 1442695040888963407
         let mut r = (s + 31) % (i + 1)
+
         if r < 0:
             r = r + i + 1
+
         perm[i] = source[r]
-        perm_grad3[i] = (perm[i] % 24) * 3
+        perm_grad3[i] = perm[i] % 24 * 3
         source[r] = source[i]
         i = i - 1
 
@@ -140,24 +142,36 @@ fn noise_init(seed: int) -> NoiseState:
     NoiseState(perm, perm_grad3, grad2, grad3)
 
 fn extrapolate2(state: &NoiseState, xsb: int, ysb: int, dx: float, dy: float) -> float:
-    let index = state.perm[(state.perm[xsb & 255] + ysb) & 255] & 14
-    (state.grad2[index] as float) * dx + (state.grad2[index + 1] as float) * dy
+    let index = state.perm[state.perm[xsb & 255] + ysb & 255] & 14
+    state.grad2[index] as float * dx + state.grad2[index + 1] as float * dy
 
-fn extrapolate3(state: &NoiseState, xsb: int, ysb: int, zsb: int, dx: float, dy: float, dz: float) -> float:
-    let index = state.perm_grad3[(state.perm[(state.perm[xsb & 255] + ysb) & 255] + zsb) & 255]
-    (state.grad3[index] as float) * dx + (state.grad3[index + 1] as float) * dy + (state.grad3[index + 2] as float) * dz
+fn extrapolate3(
+    state: &NoiseState,
+    xsb: int,
+    ysb: int,
+    zsb: int,
+    dx: float,
+    dy: float,
+    dz: float,
+) -> float:
+    let index = state.perm_grad3[state.perm[state.perm[xsb & 255] + ysb & 255] + zsb & 255]
+    state.grad3[index] as float * dx + state.grad3[index + 1] as float * dy + state.grad3[index + 2] as float * dz
 
 fn noise2(state: &NoiseState, x: float, y: float) -> float:
     let stretch_offset = (x + y) * STRETCH2
     let xs = x + stretch_offset
     let ys = y + stretch_offset
+
     let mut xsb = math.floor(xs)
     let mut ysb = math.floor(ys)
+
     let squish_offset = (xsb as float + ysb as float) * SQUISH2
     let xb = xsb as float + squish_offset
     let yb = ysb as float + squish_offset
+
     let xins = xs - xsb as float
     let yins = ys - ysb as float
+
     let in_sum = xins + yins
     let mut dx0 = x - xb
     let mut dy0 = y - yb
@@ -166,6 +180,7 @@ fn noise2(state: &NoiseState, x: float, y: float) -> float:
     let dx1 = dx0 - 1.0 - SQUISH2
     let dy1 = dy0 - SQUISH2
     let mut attn1 = 2.0 - dx1 * dx1 - dy1 * dy1
+
     if attn1 > 0.0:
         attn1 = attn1 * attn1
         value = value + attn1 * attn1 * extrapolate2(state, xsb + 1, ysb, dx1, dy1)
@@ -173,6 +188,7 @@ fn noise2(state: &NoiseState, x: float, y: float) -> float:
     let dx2 = dx0 - SQUISH2
     let dy2 = dy0 - 1.0 - SQUISH2
     let mut attn2 = 2.0 - dx2 * dx2 - dy2 * dy2
+
     if attn2 > 0.0:
         attn2 = attn2 * attn2
         value = value + attn2 * attn2 * extrapolate2(state, xsb, ysb + 1, dx2, dy2)
@@ -240,16 +256,20 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
     let xs = x + stretch_offset
     let ys = y + stretch_offset
     let zs = z + stretch_offset
+
     let mut xsb = math.floor(xs)
     let mut ysb = math.floor(ys)
     let mut zsb = math.floor(zs)
+
     let squish_offset = (xsb as float + ysb as float + zsb as float) * SQUISH3
     let xb = xsb as float + squish_offset
     let yb = ysb as float + squish_offset
     let zb = zsb as float + squish_offset
+
     let xins = xs - xsb as float
     let yins = ys - ysb as float
     let zins = zs - zsb as float
+
     let in_sum = xins + yins + zins
     let mut dx0 = x - xb
     let mut dy0 = y - yb
@@ -262,6 +282,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
     let mut ysv_ext1 = 0
     let mut zsv_ext0 = 0
     let mut zsv_ext1 = 0
+
     let mut dx_ext0 = 0.0
     let mut dx_ext1 = 0.0
     let mut dy_ext0 = 0.0
@@ -274,6 +295,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
         let mut a_score = xins
         let mut b_point = 2
         let mut b_score = yins
+
         if a_score >= b_score and zins > b_score:
             b_score = zins
             b_point = 4
@@ -287,7 +309,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
             if b_score > a_score:
                 c = b_point
 
-            if (c & 1) == 0:
+            if c & 1 == 0:
                 xsv_ext0 = xsb - 1
                 xsv_ext1 = xsb
                 dx_ext0 = dx0 + 1.0
@@ -298,12 +320,12 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
                 dx_ext0 = dx0 - 1.0
                 dx_ext1 = dx0 - 1.0
 
-            if (c & 2) == 0:
+            if c & 2 == 0:
                 ysv_ext0 = ysb
                 ysv_ext1 = ysb
                 dy_ext0 = dy0
                 dy_ext1 = dy0
-                if (c & 1) == 0:
+                if c & 1 == 0:
                     ysv_ext1 = ysv_ext1 - 1
                     dy_ext1 = dy_ext1 + 1.0
                 else:
@@ -315,7 +337,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
                 dy_ext0 = dy0 - 1.0
                 dy_ext1 = dy0 - 1.0
 
-            if (c & 4) == 0:
+            if c & 4 == 0:
                 zsv_ext0 = zsb
                 zsv_ext1 = zsb - 1
                 dz_ext0 = dz0
@@ -328,7 +350,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
         else:
             let c = a_point | b_point
 
-            if (c & 1) == 0:
+            if c & 1 == 0:
                 xsv_ext0 = xsb
                 xsv_ext1 = xsb - 1
                 dx_ext0 = dx0 - 2.0 * SQUISH3
@@ -339,7 +361,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
                 dx_ext0 = dx0 - 1.0 - 2.0 * SQUISH3
                 dx_ext1 = dx0 - 1.0 - SQUISH3
 
-            if (c & 2) == 0:
+            if c & 2 == 0:
                 ysv_ext0 = ysb
                 ysv_ext1 = ysb - 1
                 dy_ext0 = dy0 - 2.0 * SQUISH3
@@ -350,7 +372,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
                 dy_ext0 = dy0 - 1.0 - 2.0 * SQUISH3
                 dy_ext1 = dy0 - 1.0 - SQUISH3
 
-            if (c & 4) == 0:
+            if c & 4 == 0:
                 zsv_ext0 = zsb
                 zsv_ext1 = zsb - 1
                 dz_ext0 = dz0 - 2.0 * SQUISH3
@@ -370,6 +392,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
         let dy1 = dy0 - SQUISH3
         let dz1 = dz0 - SQUISH3
         let mut attn1 = 2.0 - dx1 * dx1 - dy1 * dy1 - dz1 * dz1
+
         if attn1 > 0.0:
             attn1 = attn1 * attn1
             value = value + attn1 * attn1 * extrapolate3(state, xsb + 1, ysb, zsb, dx1, dy1, dz1)
@@ -378,6 +401,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
         let dy2 = dy0 - 1.0 - SQUISH3
         let dz2 = dz1
         let mut attn2 = 2.0 - dx2 * dx2 - dy2 * dy2 - dz2 * dz2
+
         if attn2 > 0.0:
             attn2 = attn2 * attn2
             value = value + attn2 * attn2 * extrapolate3(state, xsb, ysb + 1, zsb, dx2, dy2, dz2)
@@ -386,15 +410,16 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
         let dy3 = dy1
         let dz3 = dz0 - 1.0 - SQUISH3
         let mut attn3 = 2.0 - dx3 * dx3 - dy3 * dy3 - dz3 * dz3
+
         if attn3 > 0.0:
             attn3 = attn3 * attn3
             value = value + attn3 * attn3 * extrapolate3(state, xsb, ysb, zsb + 1, dx3, dy3, dz3)
-
     elif in_sum >= 2.0:
         let mut a_point = 6
         let mut a_score = xins
         let mut b_point = 5
         let mut b_score = yins
+
         if a_score <= b_score and zins < b_score:
             b_score = zins
             b_point = 3
@@ -408,7 +433,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
             if b_score < a_score:
                 c = b_point
 
-            if (c & 1) != 0:
+            if c & 1 != 0:
                 xsv_ext0 = xsb + 2
                 xsv_ext1 = xsb + 1
                 dx_ext0 = dx0 - 2.0 - 3.0 * SQUISH3
@@ -419,12 +444,12 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
                 dx_ext0 = dx0 - 3.0 * SQUISH3
                 dx_ext1 = dx0 - 3.0 * SQUISH3
 
-            if (c & 2) != 0:
+            if c & 2 != 0:
                 ysv_ext0 = ysb + 1
                 ysv_ext1 = ysb + 1
                 dy_ext0 = dy0 - 1.0 - 3.0 * SQUISH3
                 dy_ext1 = dy0 - 1.0 - 3.0 * SQUISH3
-                if (c & 1) != 0:
+                if c & 1 != 0:
                     ysv_ext1 = ysv_ext1 + 1
                     dy_ext1 = dy_ext1 - 1.0
                 else:
@@ -436,7 +461,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
                 dy_ext0 = dy0 - 3.0 * SQUISH3
                 dy_ext1 = dy0 - 3.0 * SQUISH3
 
-            if (c & 4) != 0:
+            if c & 4 != 0:
                 zsv_ext0 = zsb + 1
                 zsv_ext1 = zsb + 2
                 dz_ext0 = dz0 - 1.0 - 3.0 * SQUISH3
@@ -449,7 +474,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
         else:
             let c = a_point & b_point
 
-            if (c & 1) != 0:
+            if c & 1 != 0:
                 xsv_ext0 = xsb + 1
                 xsv_ext1 = xsb + 2
                 dx_ext0 = dx0 - 1.0 - SQUISH3
@@ -460,7 +485,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
                 dx_ext0 = dx0 - SQUISH3
                 dx_ext1 = dx0 - 2.0 * SQUISH3
 
-            if (c & 2) != 0:
+            if c & 2 != 0:
                 ysv_ext0 = ysb + 1
                 ysv_ext1 = ysb + 2
                 dy_ext0 = dy0 - 1.0 - SQUISH3
@@ -471,7 +496,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
                 dy_ext0 = dy0 - SQUISH3
                 dy_ext1 = dy0 - 2.0 * SQUISH3
 
-            if (c & 4) != 0:
+            if c & 4 != 0:
                 zsv_ext0 = zsb + 1
                 zsv_ext1 = zsb + 2
                 dz_ext0 = dz0 - 1.0 - SQUISH3
@@ -486,39 +511,75 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
         let dy3 = dy0 - 1.0 - 2.0 * SQUISH3
         let dz3 = dz0 - 2.0 * SQUISH3
         let mut attn3 = 2.0 - dx3 * dx3 - dy3 * dy3 - dz3 * dz3
+
         if attn3 > 0.0:
             attn3 = attn3 * attn3
-            value = value + attn3 * attn3 * extrapolate3(state, xsb + 1, ysb + 1, zsb, dx3, dy3, dz3)
+            value = value + attn3 * attn3 * extrapolate3(
+                state,
+                xsb + 1,
+                ysb + 1,
+                zsb,
+                dx3,
+                dy3,
+                dz3,
+            )
 
         let dx2 = dx3
         let dy2 = dy0 - 2.0 * SQUISH3
         let dz2 = dz0 - 1.0 - 2.0 * SQUISH3
         let mut attn2 = 2.0 - dx2 * dx2 - dy2 * dy2 - dz2 * dz2
+
         if attn2 > 0.0:
             attn2 = attn2 * attn2
-            value = value + attn2 * attn2 * extrapolate3(state, xsb + 1, ysb, zsb + 1, dx2, dy2, dz2)
+            value = value + attn2 * attn2 * extrapolate3(
+                state,
+                xsb + 1,
+                ysb,
+                zsb + 1,
+                dx2,
+                dy2,
+                dz2,
+            )
 
         let dx1 = dx0 - 2.0 * SQUISH3
         let dy1 = dy3
         let dz1 = dz2
         let mut attn1 = 2.0 - dx1 * dx1 - dy1 * dy1 - dz1 * dz1
+
         if attn1 > 0.0:
             attn1 = attn1 * attn1
-            value = value + attn1 * attn1 * extrapolate3(state, xsb, ysb + 1, zsb + 1, dx1, dy1, dz1)
+            value = value + attn1 * attn1 * extrapolate3(
+                state,
+                xsb,
+                ysb + 1,
+                zsb + 1,
+                dx1,
+                dy1,
+                dz1,
+            )
 
         dx0 = dx0 - 1.0 - 3.0 * SQUISH3
         dy0 = dy0 - 1.0 - 3.0 * SQUISH3
         dz0 = dz0 - 1.0 - 3.0 * SQUISH3
         let mut attn0 = 2.0 - dx0 * dx0 - dy0 * dy0 - dz0 * dz0
+
         if attn0 > 0.0:
             attn0 = attn0 * attn0
-            value = value + attn0 * attn0 * extrapolate3(state, xsb + 1, ysb + 1, zsb + 1, dx0, dy0, dz0)
-
+            value = value + attn0 * attn0 * extrapolate3(
+                state,
+                xsb + 1,
+                ysb + 1,
+                zsb + 1,
+                dx0,
+                dy0,
+                dz0,
+            )
     else:
         let p1 = xins + yins
         let mut a_score = 0.0
         let mut a_point = 0
         let mut a_is_further_side = 0
+
         if p1 > 1.0:
             a_score = p1 - 1.0
             a_point = 3
@@ -532,6 +593,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
         let mut b_score = 0.0
         let mut b_point = 0
         let mut b_is_further_side = 0
+
         if p2 > 1.0:
             b_score = p2 - 1.0
             b_point = 5
@@ -569,14 +631,14 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
                 zsv_ext0 = zsb + 1
 
                 let c = a_point & b_point
-                if (c & 1) != 0:
+                if c & 1 != 0:
                     dx_ext1 = dx0 - 2.0 - 2.0 * SQUISH3
                     dy_ext1 = dy0 - 2.0 * SQUISH3
                     dz_ext1 = dz0 - 2.0 * SQUISH3
                     xsv_ext1 = xsb + 2
                     ysv_ext1 = ysb
                     zsv_ext1 = zsb
-                elif (c & 2) != 0:
+                elif c & 2 != 0:
                     dx_ext1 = dx0 - 2.0 * SQUISH3
                     dy_ext1 = dy0 - 2.0 - 2.0 * SQUISH3
                     dz_ext1 = dz0 - 2.0 * SQUISH3
@@ -599,14 +661,14 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
                 zsv_ext0 = zsb
 
                 let c = a_point | b_point
-                if (c & 1) == 0:
+                if c & 1 == 0:
                     dx_ext1 = dx0 + 1.0 - SQUISH3
                     dy_ext1 = dy0 - 1.0 - SQUISH3
                     dz_ext1 = dz0 - 1.0 - SQUISH3
                     xsv_ext1 = xsb - 1
                     ysv_ext1 = ysb + 1
                     zsv_ext1 = zsb + 1
-                elif (c & 2) == 0:
+                elif c & 2 == 0:
                     dx_ext1 = dx0 - 1.0 - SQUISH3
                     dy_ext1 = dy0 + 1.0 - SQUISH3
                     dz_ext1 = dz0 - 1.0 - SQUISH3
@@ -627,14 +689,14 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
                 c1 = b_point
                 c2 = a_point
 
-            if (c1 & 1) == 0:
+            if c1 & 1 == 0:
                 dx_ext0 = dx0 + 1.0 - SQUISH3
                 dy_ext0 = dy0 - 1.0 - SQUISH3
                 dz_ext0 = dz0 - 1.0 - SQUISH3
                 xsv_ext0 = xsb - 1
                 ysv_ext0 = ysb + 1
                 zsv_ext0 = zsb + 1
-            elif (c1 & 2) == 0:
+            elif c1 & 2 == 0:
                 dx_ext0 = dx0 - 1.0 - SQUISH3
                 dy_ext0 = dy0 + 1.0 - SQUISH3
                 dz_ext0 = dz0 - 1.0 - SQUISH3
@@ -655,10 +717,10 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
             xsv_ext1 = xsb
             ysv_ext1 = ysb
             zsv_ext1 = zsb
-            if (c2 & 1) != 0:
+            if c2 & 1 != 0:
                 dx_ext1 = dx_ext1 - 2.0
                 xsv_ext1 = xsv_ext1 + 2
-            elif (c2 & 2) != 0:
+            elif c2 & 2 != 0:
                 dy_ext1 = dy_ext1 - 2.0
                 ysv_ext1 = ysv_ext1 + 2
             else:
@@ -669,6 +731,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
         let dy1 = dy0 - SQUISH3
         let dz1 = dz0 - SQUISH3
         let mut attn1 = 2.0 - dx1 * dx1 - dy1 * dy1 - dz1 * dz1
+
         if attn1 > 0.0:
             attn1 = attn1 * attn1
             value = value + attn1 * attn1 * extrapolate3(state, xsb + 1, ysb, zsb, dx1, dy1, dz1)
@@ -677,6 +740,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
         let dy2 = dy0 - 1.0 - SQUISH3
         let dz2 = dz1
         let mut attn2 = 2.0 - dx2 * dx2 - dy2 * dy2 - dz2 * dz2
+
         if attn2 > 0.0:
             attn2 = attn2 * attn2
             value = value + attn2 * attn2 * extrapolate3(state, xsb, ysb + 1, zsb, dx2, dy2, dz2)
@@ -685,6 +749,7 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
         let dy3 = dy1
         let dz3 = dz0 - 1.0 - SQUISH3
         let mut attn3 = 2.0 - dx3 * dx3 - dy3 * dy3 - dz3 * dz3
+
         if attn3 > 0.0:
             attn3 = attn3 * attn3
             value = value + attn3 * attn3 * extrapolate3(state, xsb, ysb, zsb + 1, dx3, dy3, dz3)
@@ -693,34 +758,77 @@ fn noise3(state: &NoiseState, x: float, y: float, z: float) -> float:
         let dy4 = dy0 - 1.0 - 2.0 * SQUISH3
         let dz4 = dz0 - 2.0 * SQUISH3
         let mut attn4 = 2.0 - dx4 * dx4 - dy4 * dy4 - dz4 * dz4
+
         if attn4 > 0.0:
             attn4 = attn4 * attn4
-            value = value + attn4 * attn4 * extrapolate3(state, xsb + 1, ysb + 1, zsb, dx4, dy4, dz4)
+            value = value + attn4 * attn4 * extrapolate3(
+                state,
+                xsb + 1,
+                ysb + 1,
+                zsb,
+                dx4,
+                dy4,
+                dz4,
+            )
 
         let dx5 = dx4
         let dy5 = dy0 - 2.0 * SQUISH3
         let dz5 = dz0 - 1.0 - 2.0 * SQUISH3
         let mut attn5 = 2.0 - dx5 * dx5 - dy5 * dy5 - dz5 * dz5
+
         if attn5 > 0.0:
             attn5 = attn5 * attn5
-            value = value + attn5 * attn5 * extrapolate3(state, xsb + 1, ysb, zsb + 1, dx5, dy5, dz5)
+            value = value + attn5 * attn5 * extrapolate3(
+                state,
+                xsb + 1,
+                ysb,
+                zsb + 1,
+                dx5,
+                dy5,
+                dz5,
+            )
 
         let dx6 = dx0 - 2.0 * SQUISH3
         let dy6 = dy4
         let dz6 = dz5
         let mut attn6 = 2.0 - dx6 * dx6 - dy6 * dy6 - dz6 * dz6
+
         if attn6 > 0.0:
             attn6 = attn6 * attn6
-            value = value + attn6 * attn6 * extrapolate3(state, xsb, ysb + 1, zsb + 1, dx6, dy6, dz6)
+            value = value + attn6 * attn6 * extrapolate3(
+                state,
+                xsb,
+                ysb + 1,
+                zsb + 1,
+                dx6,
+                dy6,
+                dz6,
+            )
 
     let mut attn_ext0 = 2.0 - dx_ext0 * dx_ext0 - dy_ext0 * dy_ext0 - dz_ext0 * dz_ext0
     if attn_ext0 > 0.0:
         attn_ext0 = attn_ext0 * attn_ext0
-        value = value + attn_ext0 * attn_ext0 * extrapolate3(state, xsv_ext0, ysv_ext0, zsv_ext0, dx_ext0, dy_ext0, dz_ext0)
+        value = value + attn_ext0 * attn_ext0 * extrapolate3(
+            state,
+            xsv_ext0,
+            ysv_ext0,
+            zsv_ext0,
+            dx_ext0,
+            dy_ext0,
+            dz_ext0,
+        )
 
     let mut attn_ext1 = 2.0 - dx_ext1 * dx_ext1 - dy_ext1 * dy_ext1 - dz_ext1 * dz_ext1
     if attn_ext1 > 0.0:
         attn_ext1 = attn_ext1 * attn_ext1
-        value = value + attn_ext1 * attn_ext1 * extrapolate3(state, xsv_ext1, ysv_ext1, zsv_ext1, dx_ext1, dy_ext1, dz_ext1)
+        value = value + attn_ext1 * attn_ext1 * extrapolate3(
+            state,
+            xsv_ext1,
+            ysv_ext1,
+            zsv_ext1,
+            dx_ext1,
+            dy_ext1,
+            dz_ext1,
+        )
 
     value / NORM3

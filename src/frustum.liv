@@ -10,10 +10,11 @@ struct Frustum:
 
 impl Frustum:
     fn __init__(self):
-        let half_y = (V_FOV as f64) * 0.5
+        let half_y = V_FOV as f64 * 0.5
         self.factor_y = 1.0 / math.cos(half_y)
         self.tan_y = math.tan(half_y)
-        let half_x = (H_FOV as f64) * 0.5
+
+        let half_x = H_FOV as f64 * 0.5
         self.factor_x = 1.0 / math.cos(half_x)
         self.tan_x = math.tan(half_x)
 
@@ -21,18 +22,36 @@ impl Frustum:
         let half_y = v_fov * 0.5
         self.factor_y = 1.0 / math.cos(half_y)
         self.tan_y = math.tan(half_y)
+
         let half_x = math.atan(math.tan(half_y) * aspect)
         self.factor_x = 1.0 / math.cos(half_x)
         self.tan_x = math.tan(half_x)
 
-    fn is_on_frustum(self: &Frustum, ccx: f64, ccy: f64, ccz: f64, px: f64, py: f64, pz: f64, fx: f64, fy: f64, fz: f64, ux: f64, uy: f64, uz: f64, rx: f64, ry: f64, rz: f64) -> bool:
+    fn is_on_frustum(
+        self: &Frustum,
+        ccx: f64,
+        ccy: f64,
+        ccz: f64,
+        px: f64,
+        py: f64,
+        pz: f64,
+        fx: f64,
+        fy: f64,
+        fz: f64,
+        ux: f64,
+        uy: f64,
+        uz: f64,
+        rx: f64,
+        ry: f64,
+        rz: f64,
+    ) -> bool:
         let r = CHUNK_SPHERE_RADIUS as f64
         let dx = ccx - px
         let dy = ccy - py
         let dz = ccz - pz
 
         let sz = dx * fx + dy * fy + dz * fz
-        if sz < (NEAR as f64) - r or sz > (FAR as f64) + r:
+        if sz < NEAR as f64 - r or sz > FAR as f64 + r:
             return False
 
         let sy = dx * ux + dy * uy + dz * uz

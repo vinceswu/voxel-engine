@@ -8,19 +8,45 @@ impl QuadMesh:
         let ctx = app.ctx
         let program = app.shader_program.water
         let vertex_data = self.get_vertex_data()
+
         self.base = BaseMesh(ctx, program, '2u1 3u1', vertex_data, 'in_tex_coord', 'in_position')
 
     fn get_vertex_data(self: &QuadMesh) -> bytes:
         let rows = [
-            0,0, 0,0,0,
-            1,1, 1,0,1,
-            1,0, 1,0,0,
-            0,0, 0,0,0,
-            0,1, 0,0,1,
-            1,1, 1,0,1
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            0,
+            1,
         ]
         let mut out = bytes_new(0)
         let mut i = 0
+
         while i < len(rows):
             bytes_push(out, rows[i])
             i = i + 1

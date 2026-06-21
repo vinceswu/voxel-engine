@@ -86,18 +86,23 @@ impl ShaderProgram:
             self.clouds['m_proj'].write(self.engine.player.camera.m_proj)
             self.write_sky_tan()
             self.engine.player.camera.proj_dirty = False
+
         self.skybox['u_forward'].write(self.engine.player.camera.forward)
         self.skybox['u_right'].write(self.engine.player.camera.right)
         self.skybox['u_up'].write(self.engine.player.camera.up)
         self.chunk['m_view'].write(self.engine.player.camera.m_view)
         self.voxel_marker['m_view'].write(self.engine.player.camera.m_view)
         self.water['m_view'].write(self.engine.player.camera.m_view)
-        self.water['u_cam_pos'].write(glm.vec2(self.engine.player.camera.position.x, self.engine.player.camera.position.z))
+        self.water['u_cam_pos'].write(
+            glm.vec2(self.engine.player.camera.position.x, self.engine.player.camera.position.z),
+        )
         self.clouds['m_view'].write(self.engine.player.camera.m_view)
-        self.hotbar['u_selected'] = ((self.engine.scene.world.voxel_handler.new_voxel_id - 1) as float)
+        self.hotbar['u_selected'] = (self.engine.scene.world.voxel_handler.new_voxel_id - 1) as float
 
     fn get_program(self: &ShaderProgram, shader_name: str) -> PyObject:
         let mut prog: PyObject = None
-        with io.open(f"src/shaders/{shader_name}.vert") as file, io.open(f"src/shaders/{shader_name}.frag") as file2:
+        with io.open(
+            f"src/shaders/{shader_name}.vert",
+        ) as file, io.open(f"src/shaders/{shader_name}.frag") as file2:
             prog = self.ctx.program(vertex_shader=file.read(), fragment_shader=file2.read())
         prog

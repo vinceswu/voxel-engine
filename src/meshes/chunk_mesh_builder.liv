@@ -1,44 +1,233 @@
 from settings import *
 
 fn neighbor_slot(slots: &[int], dcx: int, dcy: int, dcz: int) -> int:
-    slots[(dcx + 1) + 3 * (dcz + 1) + 9 * (dcy + 1)]
+    slots[dcx + 1 + 3 * (dcz + 1) + 9 * (dcy + 1)]
 
 fn face_normals_table() -> [int]:
-    [
-        0, 1, 0,
-        0, -1, 0,
-        1, 0, 0,
-        -1, 0, 0,
-        0, 0, -1,
-        0, 0, 1
-    ]
+    [0, 1, 0, 0, -1, 0, 1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 1]
 
 fn face_verts_table() -> [int]:
     [
-        0,1,0, 0,1,1, 1,1,1, 0,1,0, 1,1,1, 1,1,0,
-        0,0,0, 1,0,1, 0,0,1, 0,0,0, 1,0,0, 1,0,1,
-        1,0,0, 1,1,0, 1,1,1, 1,0,0, 1,1,1, 1,0,1,
-        0,0,0, 0,1,1, 0,1,0, 0,0,0, 0,0,1, 0,1,1,
-        0,0,0, 0,1,0, 1,1,0, 0,0,0, 1,1,0, 1,0,0,
-        0,0,1, 1,1,1, 0,1,1, 0,0,1, 1,0,1, 1,1,1
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
     ]
 
 fn ao_dirs_table() -> [int]:
     [
-        -1,0,0, 0,0,-1, -1,0,-1,
-        -1,0,0, 0,0,1, -1,0,1,
-        1,0,0, 0,0,1, 1,0,1,
-        1,0,0, 0,0,-1, 1,0,-1,
-
-        0,-1,0, 0,0,-1, 0,-1,-1,
-        0,1,0, 0,0,-1, 0,1,-1,
-        0,1,0, 0,0,1, 0,1,1,
-        0,-1,0, 0,0,1, 0,-1,1,
-
-        -1,0,0, 0,-1,0, -1,-1,0,
-        -1,0,0, 0,1,0, -1,1,0,
-        1,0,0, 0,1,0, 1,1,0,
-        1,0,0, 0,-1,0, 1,-1,0
+        -1,
+        0,
+        0,
+        0,
+        0,
+        -1,
+        -1,
+        0,
+        -1,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        -1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        -1,
+        1,
+        0,
+        -1,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        -1,
+        0,
+        -1,
+        -1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        -1,
+        0,
+        1,
+        -1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1,
+        1,
+        -1,
+        0,
+        0,
+        0,
+        -1,
+        0,
+        -1,
+        -1,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        -1,
+        0,
+        1,
+        -1,
+        0,
     ]
 
 fn ao_offsets_table(normals: &[int]) -> [int]:
@@ -74,9 +263,11 @@ fn vert_corner_table(fv: &[int]) -> [int]:
     let mut uy: [int] = list_new(4)
     let mut uz: [int] = list_new(4)
     let mut face = 0
+
     while face < 6:
         let mut count = 0
         let mut vi = 0
+
         while vi < 6:
             let base = face * 18 + vi * 3
             let vx = fv[base]
@@ -84,10 +275,12 @@ fn vert_corner_table(fv: &[int]) -> [int]:
             let vz = fv[base + 2]
             let mut found = -1
             let mut k = 0
+
             while k < count:
                 if ux[k] == vx and uy[k] == vy and uz[k] == vz:
                     found = k
                 k = k + 1
+
             if found < 0:
                 ux[count] = vx
                 uy[count] = vy
@@ -102,8 +295,10 @@ fn vert_corner_table(fv: &[int]) -> [int]:
 fn corner_coords_table(fv: &[int], vci: &[int]) -> [int]:
     let mut t: [int] = list_new(72)
     let mut face = 0
+
     while face < 6:
         let mut vi = 0
+
         while vi < 6:
             let c = vci[face * 6 + vi]
             t[face * 12 + c * 3] = fv[face * 18 + vi * 3]
@@ -114,14 +309,21 @@ fn corner_coords_table(fv: &[int], vci: &[int]) -> [int]:
     t
 
 fn emit_seq_table() -> [int]:
-    [
-        0, 1, 2, 0, 2, 3,  // even face
-        0, 1, 2, 0, 3, 1,  // odd face
-        3, 0, 1, 3, 1, 2,  // even flipped face
-        3, 2, 0, 3, 1, 2   // odd flipped face
-    ]
+    [0, 1, 2, 0, 2, 3, 0, 1, 2, 0, 3, 1, 3, 0, 1, 3, 1, 2, 3, 2, 0, 3, 1, 2]
+    // even face
+    // odd face
+    // even flipped face
+    // odd flipped face
 
-fn is_solid(world_voxels: &mut [bytes], slots: &[int], x: int, y: int, z: int, cs: int, ca: int) -> int:
+fn is_solid(
+    world_voxels: &mut [bytes],
+    slots: &[int],
+    x: int,
+    y: int,
+    z: int,
+    cs: int,
+    ca: int,
+) -> int:
     if 0 <= x and x < cs and 0 <= y and y < cs and 0 <= z and z < cs:
         if world_voxels[slots[13]][x + cs * z + ca * y] != 0:
             return 1
@@ -129,6 +331,7 @@ fn is_solid(world_voxels: &mut [bytes], slots: &[int], x: int, y: int, z: int, c
     let mut dcx = 0
     let mut dcy = 0
     let mut dcz = 0
+
     if x < 0:
         dcx = -1
     elif x >= cs:
@@ -141,11 +344,12 @@ fn is_solid(world_voxels: &mut [bytes], slots: &[int], x: int, y: int, z: int, c
         dcz = -1
     elif z >= cs:
         dcz = 1
+
     let nci = neighbor_slot(slots, dcx, dcy, dcz)
     if nci >= 0:
-        let lx = ((x % cs) + cs) % cs
-        let ly = ((y % cs) + cs) % cs
-        let lz = ((z % cs) + cs) % cs
+        let lx = (x % cs + cs) % cs
+        let ly = (y % cs + cs) % cs
+        let lz = (z % cs + cs) % cs
         if world_voxels[nci][lx + cs * lz + ca * ly] != 0:
             return 1
     0
@@ -180,16 +384,20 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
     let mut y = 0
     while y < cs:
         let mut z = 0
+
         while z < cs:
             let mut x = 0
+
             while x < cs:
                 let vid = voxels[x + cs * z + ca * y]
                 if vid != 0:
                     let mut face = 0
+
                     while face < 6:
                         let nx = normals[face * 3]
                         let ny = normals[face * 3 + 1]
                         let nz = normals[face * 3 + 2]
+
                         let ax = x + nx
                         let ay = y + ny
                         let az = z + nz
@@ -201,9 +409,9 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
                         else:
                             let nci = neighbor_slot(slots, nx, ny, nz)
                             if nci >= 0:
-                                let lx = ((ax % cs) + cs) % cs
-                                let ly = ((ay % cs) + cs) % cs
-                                let lz = ((az % cs) + cs) % cs
+                                let lx = (ax % cs + cs) % cs
+                                let ly = (ay % cs + cs) % cs
+                                let lz = (az % cs + cs) % cs
                                 if world_voxels[nci][lx + cs * lz + ca * ly] != 0:
                                     neighbor_solid = 1
 
@@ -213,16 +421,44 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
                             let mut ao2 = 0
                             let mut ao3 = 0
                             let mut ci = 0
+
                             while ci < 4:
                                 let base = face * 36 + ci * 9
-                                let s0 = is_solid(world_voxels, slots, x + ao_offs[base], y + ao_offs[base + 1], z + ao_offs[base + 2], cs, ca)
-                                let s1 = is_solid(world_voxels, slots, x + ao_offs[base + 3], y + ao_offs[base + 4], z + ao_offs[base + 5], cs, ca)
-                                let s2 = is_solid(world_voxels, slots, x + ao_offs[base + 6], y + ao_offs[base + 7], z + ao_offs[base + 8], cs, ca)
+                                let s0 = is_solid(
+                                    world_voxels,
+                                    slots,
+                                    x + ao_offs[base],
+                                    y + ao_offs[base + 1],
+                                    z + ao_offs[base + 2],
+                                    cs,
+                                    ca,
+                                )
+                                let s1 = is_solid(
+                                    world_voxels,
+                                    slots,
+                                    x + ao_offs[base + 3],
+                                    y + ao_offs[base + 4],
+                                    z + ao_offs[base + 5],
+                                    cs,
+                                    ca,
+                                )
+                                let s2 = is_solid(
+                                    world_voxels,
+                                    slots,
+                                    x + ao_offs[base + 6],
+                                    y + ao_offs[base + 7],
+                                    z + ao_offs[base + 8],
+                                    cs,
+                                    ca,
+                                )
                                 let mut ao = 3 - s0 - s1
+
                                 if s2 != 0 and (s0 == 0 or s1 == 0):
                                     ao = ao - 1
+
                                 if ao < 0:
                                     ao = 0
+
                                 // odd faces wind opposite: corner ids 1 and 2
                                 // enumerate in swapped geometric order
                                 let mut corner = ci
@@ -231,6 +467,7 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
                                         corner = 2
                                     elif ci == 2:
                                         corner = 1
+
                                 if corner == 0:
                                     ao0 = ao
                                 elif corner == 1:
@@ -245,15 +482,29 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
                             let c1 = vci[face * 6 + 1]
                             let c2 = vci[face * 6 + 2]
                             let mut c3 = vci[face * 6 + 5]
+
                             if face % 2 == 1:
                                 c3 = vci[face * 6 + 4]
 
                             let mut flip = 0
-                            if ao_at(ao0, ao1, ao2, ao3, c1) + ao_at(ao0, ao1, ao2, ao3, c3) > ao_at(ao0, ao1, ao2, ao3, c0) + ao_at(ao0, ao1, ao2, ao3, c2):
+                            if ao_at(
+                                ao0,
+                                ao1,
+                                ao2,
+                                ao3,
+                                c1,
+                            ) + ao_at(
+                                ao0,
+                                ao1,
+                                ao2,
+                                ao3,
+                                c3,
+                            ) > ao_at(ao0, ao1, ao2, ao3, c0) + ao_at(ao0, ao1, ao2, ao3, c2):
                                 flip = 1
 
-                            let seq_base = ((face % 2) + flip * 2) * 6
+                            let seq_base = (face % 2 + flip * 2) * 6
                             let mut vi = 0
+
                             while vi < 6:
                                 let corner = seq[seq_base + vi]
                                 let cbase = face * 12 + corner * 3
@@ -261,7 +512,7 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
                                 let wy = y + cc[cbase + 1]
                                 let wz = z + cc[cbase + 2]
                                 let ao_v = ao_at(ao0, ao1, ao2, ao3, corner)
-                                let packed = (wx << 26) | (wy << 20) | (wz << 14) | (vid << 6) | (face << 3) | (ao_v << 1) | flip
+                                let packed = wx << 26 | wy << 20 | wz << 14 | vid << 6 | face << 3 | ao_v << 1 | flip
                                 bytes_push_u32_le(out, packed)
                                 vi = vi + 1
                         face = face + 1

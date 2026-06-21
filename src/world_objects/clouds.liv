@@ -17,12 +17,12 @@ impl Clouds:
     fn update(self: &mut Clouds):
         self.mesh.base.program['u_time'] = self.app.time
 
-        let span = ((CLOUD_W as int) * (CLOUD_SCALE as int)) as f64
+        let span = (CLOUD_W as int * CLOUD_SCALE as int) as f64
         let cx = self.app.player.camera.position[0] as f64
         let cz = self.app.player.camera.position[2] as f64
-        let center = (CLOUD_CENTER as int) as f64
-        let ox = (floor_to_int((cx - center) / span + 0.5) as f64) * span
-        let oz = (floor_to_int((cz - center) / span + 0.5) as f64) * span
+        let center = CLOUD_CENTER as int as f64
+        let ox = floor_to_int((cx - center) / span + 0.5) as f64 * span
+        let oz = floor_to_int((cz - center) / span + 0.5) as f64 * span
         self.mesh.base.program['u_offset'].write(glm.vec2(ox, oz))
 
     fn render(self: &Clouds):
