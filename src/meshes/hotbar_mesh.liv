@@ -12,9 +12,8 @@ impl HotbarMesh:
 
     fn get_vertex_data(self: &HotbarMesh) -> bytes:
         let mut out = bytes_new(0)
-        let mut slot = 0
 
-        while slot < 7:
+        for slot in 0..7:
             let x0 = 1 + slot * 14
 
             // slot frame
@@ -132,7 +131,6 @@ impl HotbarMesh:
                 24 + id,
                 slot,
             )
-            slot = slot + 1
         out
 
     fn render(self: &HotbarMesh):

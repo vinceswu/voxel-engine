@@ -41,11 +41,9 @@ impl ChunkMap:
         self.count = 0
         let mut keys: [int] = list_new(cap)
         let mut vals: [int] = list_new(cap)
-        let mut i = 0
 
-        while i < cap:
+        for i in 0..cap:
             keys[i] = -1
-            i = i + 1
 
         self.keys = keys
         self.vals = vals
@@ -75,7 +73,7 @@ impl ChunkMap:
             if k == -1:
                 self.keys[i] = key
                 self.vals[i] = val
-                self.count = self.count + 1
+                self.count += 1
                 return
             i = i + 1 & self.mask
 
@@ -90,7 +88,7 @@ impl ChunkMap:
                 break
             i = i + 1 & self.mask
 
-        self.count = self.count - 1
+        self.count -= 1
         let mut j = i
 
         while True:
@@ -124,15 +122,12 @@ impl ChunkMap:
         let new_cap = old_cap * 2
         let mut nkeys: [int] = list_new(new_cap)
         let mut nvals: [int] = list_new(new_cap)
-        let mut i = 0
 
-        while i < new_cap:
+        for i in 0..new_cap:
             nkeys[i] = -1
-            i = i + 1
         let nmask = new_cap - 1
-        i = 0
 
-        while i < old_cap:
+        for i in 0..old_cap:
             let k = self.keys[i]
             if k != -1:
                 let mut p = map_hash(k, nmask)
@@ -140,7 +135,6 @@ impl ChunkMap:
                     p = p + 1 & nmask
                 nkeys[p] = k
                 nvals[p] = self.vals[i]
-            i = i + 1
 
         self.keys = nkeys
         self.vals = nvals

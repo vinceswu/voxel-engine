@@ -233,8 +233,7 @@ fn ao_dirs_table() -> [int]:
 fn ao_offsets_table(normals: &[int]) -> [int]:
     let dirs = ao_dirs_table()
     let mut t: [int] = list_new(216)
-    let mut face = 0
-    while face < 6:
+    for face in 0..6:
         let nx = normals[face * 3]
         let ny = normals[face * 3 + 1]
         let nz = normals[face * 3 + 2]
@@ -243,18 +242,13 @@ fn ao_offsets_table(normals: &[int]) -> [int]:
             axis = 0
         elif face < 4:
             axis = 1
-        let mut ci = 0
-        while ci < 4:
-            let mut si = 0
-            while si < 3:
+        for ci in 0..4:
+            for si in 0..3:
                 let src = axis * 36 + ci * 9 + si * 3
                 let dst = face * 36 + ci * 9 + si * 3
                 t[dst] = nx + dirs[src]
                 t[dst + 1] = ny + dirs[src + 1]
                 t[dst + 2] = nz + dirs[src + 2]
-                si = si + 1
-            ci = ci + 1
-        face = face + 1
     t
 
 fn vert_corner_table(fv: &[int]) -> [int]:
@@ -262,50 +256,39 @@ fn vert_corner_table(fv: &[int]) -> [int]:
     let mut ux: [int] = list_new(4)
     let mut uy: [int] = list_new(4)
     let mut uz: [int] = list_new(4)
-    let mut face = 0
 
-    while face < 6:
+    for face in 0..6:
         let mut count = 0
-        let mut vi = 0
 
-        while vi < 6:
+        for vi in 0..6:
             let base = face * 18 + vi * 3
             let vx = fv[base]
             let vy = fv[base + 1]
             let vz = fv[base + 2]
             let mut found = -1
-            let mut k = 0
 
-            while k < count:
+            for k in 0..count:
                 if ux[k] == vx and uy[k] == vy and uz[k] == vz:
                     found = k
-                k = k + 1
 
             if found < 0:
                 ux[count] = vx
                 uy[count] = vy
                 uz[count] = vz
                 found = count
-                count = count + 1
+                count += 1
             t[face * 6 + vi] = found
-            vi = vi + 1
-        face = face + 1
     t
 
 fn corner_coords_table(fv: &[int], vci: &[int]) -> [int]:
     let mut t: [int] = list_new(72)
-    let mut face = 0
 
-    while face < 6:
-        let mut vi = 0
-
-        while vi < 6:
+    for face in 0..6:
+        for vi in 0..6:
             let c = vci[face * 6 + vi]
             t[face * 12 + c * 3] = fv[face * 18 + vi * 3]
             t[face * 12 + c * 3 + 1] = fv[face * 18 + vi * 3 + 1]
             t[face * 12 + c * 3 + 2] = fv[face * 18 + vi * 3 + 2]
-            vi = vi + 1
-        face = face + 1
     t
 
 fn emit_seq_table() -> [int]:
@@ -381,19 +364,12 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
 
     let voxels = &world_voxels[chunk_index]
 
-    let mut y = 0
-    while y < cs:
-        let mut z = 0
-
-        while z < cs:
-            let mut x = 0
-
-            while x < cs:
+    for y in 0..cs:
+        for z in 0..cs:
+            for x in 0..cs:
                 let vid = voxels[x + cs * z + ca * y]
                 if vid != 0:
-                    let mut face = 0
-
-                    while face < 6:
+                    for face in 0..6:
                         let nx = normals[face * 3]
                         let ny = normals[face * 3 + 1]
                         let nz = normals[face * 3 + 2]
@@ -420,9 +396,8 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
                             let mut ao1 = 0
                             let mut ao2 = 0
                             let mut ao3 = 0
-                            let mut ci = 0
 
-                            while ci < 4:
+                            for ci in 0..4:
                                 let base = face * 36 + ci * 9
                                 let s0 = is_solid(
                                     world_voxels,
@@ -454,7 +429,7 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
                                 let mut ao = 3 - s0 - s1
 
                                 if s2 != 0 and (s0 == 0 or s1 == 0):
-                                    ao = ao - 1
+                                    ao -= 1
 
                                 if ao < 0:
                                     ao = 0
@@ -476,7 +451,6 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
                                     ao2 = ao
                                 else:
                                     ao3 = ao
-                                ci = ci + 1
 
                             let c0 = vci[face * 6]
                             let c1 = vci[face * 6 + 1]
@@ -503,9 +477,8 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
                                 flip = 1
 
                             let seq_base = (face % 2 + flip * 2) * 6
-                            let mut vi = 0
 
-                            while vi < 6:
+                            for vi in 0..6:
                                 let corner = seq[seq_base + vi]
                                 let cbase = face * 12 + corner * 3
                                 let wx = x + cc[cbase]
@@ -514,9 +487,4 @@ fn build_chunk_mesh(world_voxels: &mut [bytes], slots: &[int]) -> bytes:
                                 let ao_v = ao_at(ao0, ao1, ao2, ao3, corner)
                                 let packed = wx << 26 | wy << 20 | wz << 14 | vid << 6 | face << 3 | ao_v << 1 | flip
                                 bytes_push_u32_le(out, packed)
-                                vi = vi + 1
-                        face = face + 1
-                x = x + 1
-            z = z + 1
-        y = y + 1
     out

@@ -19,16 +19,11 @@ impl CloudMesh:
         let threshold = 0.2 / 47.0
 
         let mut occ = bytes_new(width * depth)
-        let mut z = 0
 
-        while z < depth:
-            let mut x = 0
-
-            while x < width:
+        for z in 0..depth:
+            for x in 0..width:
                 if noise2(noise, x as float * scale, z as float * scale) >= threshold:
                     occ[z * width + x] = 1
-                x = x + 1
-            z = z + 1
 
         let y0 = CLOUD_HEIGHT as int
         let y1 = y0 + CLOUD_THICKNESS as int
@@ -49,7 +44,7 @@ impl CloudMesh:
                     let x0 = x
 
                     while x < width and occ[row + x] == 1:
-                        x = x + 1
+                        x += 1
                     let x1 = x
 
                     // top (+y) and bottom (-y)
@@ -67,7 +62,7 @@ impl CloudMesh:
                             let s0 = sx
 
                             while sx < x1 and (rz == 0 or occ[row - width + sx] == 0):
-                                sx = sx + 1
+                                sx += 1
                             push_cloud_quad(
                                 &mut out,
                                 s0,
@@ -85,7 +80,7 @@ impl CloudMesh:
                                 229,
                             )
                         else:
-                            sx = sx + 1
+                            sx += 1
                     // +z faces where the next row is empty
                     sx = x0
                     while sx < x1:
@@ -93,7 +88,7 @@ impl CloudMesh:
                             let s0 = sx
 
                             while sx < x1 and (rz1 == depth or occ[row + width + sx] == 0):
-                                sx = sx + 1
+                                sx += 1
                             push_cloud_quad(
                                 &mut out,
                                 s0,
@@ -111,10 +106,10 @@ impl CloudMesh:
                                 229,
                             )
                         else:
-                            sx = sx + 1
+                            sx += 1
                 else:
-                    x = x + 1
-            rz = rz + 1
+                    x += 1
+            rz += 1
         out
 
 // Quad corners must arrive in CCW order seen from outside the box;

@@ -91,9 +91,8 @@ impl CubeMesh:
             1,
         ]
         let mut out = bytes_new(0)
-        let mut i = 0
 
-        while i < 36:
+        for i in 0..36:
             let ti = tex_indices[i]
             push_f16(&mut out, tex_coords[ti * 2])
             push_f16(&mut out, tex_coords[ti * 2 + 1])
@@ -101,7 +100,6 @@ impl CubeMesh:
             push_f16(&mut out, vertices[vi * 3])
             push_f16(&mut out, vertices[vi * 3 + 1])
             push_f16(&mut out, vertices[vi * 3 + 2])
-            i = i + 1
         out
 
     fn render(self: &CubeMesh):

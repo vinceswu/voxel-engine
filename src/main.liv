@@ -71,7 +71,7 @@ impl VoxelEngine:
         let mut sy = WORLD_H as int * CHUNK_SIZE as int - 1
 
         while sy > 0 and self.scene.world.voxel_handler.is_solid(sx, sy, sx) == False:
-            sy = sy - 1
+            sy -= 1
 
         self.player_camera.position = glm.vec3(sx, (sy + 1) as f64 + EYE_HEIGHT + 0.001, sx)
 

@@ -27,7 +27,7 @@ Olive handles all the game logic. Rendering goes through pygame and ModernGL via
 
 ## Prerequisites
 
-- **Olive >= 0.1.25** - see installation below
+- **Olive >= 0.3.9** - see installation below
 - **Python 3.x** - with dependencies from `requirements.txt`
 
 ## Controls

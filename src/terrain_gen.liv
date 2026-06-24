@@ -44,19 +44,15 @@ fn fill_chunk(
     wz0: int,
 ) -> int:
     let cs = CHUNK_SIZE as int
-    let mut i = 0
 
-    while i < CHUNK_VOL as int:
+    for i in 0..CHUNK_VOL as int:
         voxels[i] = 0
-        i = i + 1
     let mut solid = 0
-    let mut x = 0
 
-    while x < cs:
+    for x in 0..cs:
         let wx = wx0 + x
-        let mut z = 0
 
-        while z < cs:
+        for z in 0..cs:
             let wz = wz0 + z
             let world_height = heights[x + cs * z]
             let local_height = min(world_height - wy0, cs)
@@ -64,10 +60,8 @@ fn fill_chunk(
 
             while y < local_height:
                 if set_voxel_id(noise, voxels, x, y, z, wx, wy0 + y, wz, world_height) != 0:
-                    solid = solid + 1
-                y = y + 1
-            z = z + 1
-        x = x + 1
+                    solid += 1
+                y += 1
     solid
 
 fn set_voxel_id(
@@ -137,16 +131,16 @@ fn place_tree(voxels: &mut bytes, x: int, y: int, z: int, wx: int, wy: int, wz: 
             while iz < TREE_H_WIDTH as int - m:
                 if (ix + iz) % 4 != 0:
                     voxels[get_index(x + ix + k, y + iy, z + iz + k)] = LEAVES as int
-                iz = iz + 1
-            ix = ix + 1
+                iz += 1
+            ix += 1
         if n > 0:
-            m = m + 1
-        n = n + 1
-        iy = iy + 1
+            m += 1
+        n += 1
+        iy += 1
 
     let mut iy = 1
     while iy < TREE_HEIGHT as int - 2:
         voxels[get_index(x, y + iy, z)] = WOOD as int
-        iy = iy + 1
+        iy += 1
 
     voxels[get_index(x, y + TREE_HEIGHT as int - 2, z)] = LEAVES as int

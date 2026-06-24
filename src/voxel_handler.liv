@@ -70,11 +70,11 @@ impl VoxelHandler:
         while i < self.rebuild_count:
             if self.rebuild_queue[i] == chunk_slot:
                 return
-            i = i + 1
+            i += 1
 
         if self.rebuild_count < len(self.rebuild_queue):
             self.rebuild_queue[self.rebuild_count] = chunk_slot
-            self.rebuild_count = self.rebuild_count + 1
+            self.rebuild_count += 1
 
     fn add_voxel(self: &mut VoxelHandler):
         if self.voxel_id == 0:
@@ -199,7 +199,7 @@ impl VoxelHandler:
 
         let mut iters = 0
         while not (max_x > 1.0 and max_y > 1.0 and max_z > 1.0):
-            iters = iters + 1
+            iters += 1
 
             if iters > 100:
                 return False
@@ -224,20 +224,20 @@ impl VoxelHandler:
             if max_x < max_y:
                 if max_x < max_z:
                     current_voxel_pos.x = current_voxel_pos.x + dx
-                    max_x = max_x + delta_x
+                    max_x += delta_x
                     step_dir = 0
                 else:
                     current_voxel_pos.z = current_voxel_pos.z + dz
-                    max_z = max_z + delta_z
+                    max_z += delta_z
                     step_dir = 2
             else:
                 if max_y < max_z:
                     current_voxel_pos.y = current_voxel_pos.y + dy
-                    max_y = max_y + delta_y
+                    max_y += delta_y
                     step_dir = 1
                 else:
                     current_voxel_pos.z = current_voxel_pos.z + dz
-                    max_z = max_z + delta_z
+                    max_z += delta_z
                     step_dir = 2
         False
 

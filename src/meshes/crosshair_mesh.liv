@@ -53,11 +53,9 @@ impl CrosshairMesh:
             18,
         ]
         let mut out = bytes_new(0)
-        let mut i = 0
 
-        while i < len(rows):
+        for i in 0..len(rows):
             bytes_push(out, rows[i])
-            i = i + 1
         out
 
     fn render(self: &CrosshairMesh):

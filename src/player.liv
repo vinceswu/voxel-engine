@@ -82,9 +82,9 @@ impl Player:
             let mut id = self.app.scene.world.voxel_handler.new_voxel_id - event.y as int
 
             while id < 1:
-                id = id + 7
+                id += 7
             while id > 7:
-                id = id - 7
+                id -= 7
 
             self.app.scene.world.voxel_handler.new_voxel_id = id
 
@@ -258,9 +258,8 @@ impl Player:
             let sz = dz / steps as f64
 
             self.on_ground = False
-            let mut step_i = 0
 
-            while step_i < steps:
+            for _step_i in 0..steps:
                 px = px + sx
                 if self.collides(px, py, pz):
                     if sx > 0.0:
@@ -285,7 +284,6 @@ impl Player:
                             py - EYE_HEIGHT + PLAYER_HEIGHT,
                         ) as f64 - PLAYER_HEIGHT + EYE_HEIGHT - 0.001
                     self.velocity_y = 0.0
-                step_i = step_i + 1
 
         self.camera.position = glm.vec3(px, py, pz)
 
@@ -305,9 +303,9 @@ impl Player:
                 while z <= z1:
                     if self.app.scene.world.voxel_handler.is_solid(x, y, z):
                         return True
-                    z = z + 1
-                y = y + 1
-            x = x + 1
+                    z += 1
+                y += 1
+            x += 1
         False
 
     fn update_breaking(self: &mut Player, dt_ms: f64):
