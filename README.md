@@ -17,6 +17,7 @@
   <a href="https://github.com/vinceswu/voxel-engine/blob/master/LICENSE">
     <img src="https://img.shields.io/github/license/vinceswu/voxel-engine?style=flat-square">
   </a>
+  <img src="https://img.shields.io/badge/language-Olive-informational?style=flat-square">
 </p>
 
 ## Overview
