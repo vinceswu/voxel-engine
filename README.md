@@ -17,12 +17,14 @@
   <a href="https://github.com/vinceswu/voxel-engine/blob/master/LICENSE">
     <img src="https://img.shields.io/github/license/vinceswu/voxel-engine?style=flat-square">
   </a>
-  <img src="https://img.shields.io/badge/language-Olive-informational?style=flat-square">
+  <a href="https://github.com/ecnivslabs/olive">
+    <img src="https://img.shields.io/badge/language-Olive-informational?style=flat-square">
+  </a>
 </p>
 
 ## Overview
 
-A voxel engine written in [Olive](https://github.com/olive-language/olive). This is a dogfood project for the language, using it to build something non-trivial that touches structs, references, FFI, math, and real-time rendering.
+A voxel engine written in [Olive](https://github.com/ecnivslabs/olive). This is a dogfood project for the language, using it to build something non-trivial that touches structs, references, FFI, math, and real-time rendering.
 
 Olive handles all the game logic. Rendering goes through pygame and ModernGL via `import py`. Noise generation is a native Olive implementation of OpenSimplex2 (no Python noise libraries needed).
 
@@ -78,10 +80,10 @@ pip install -r requirements.txt
 
    **Linux / macOS:**
    ```bash
-   curl -sSL https://raw.githubusercontent.com/olive-language/olive/master/install.sh | sh
+   curl -sSL https://raw.githubusercontent.com/ecnivslabs/olive/master/install.sh | sh
    ```
 
-   **Windows:** download from the [releases page](https://github.com/olive-language/olive/releases/latest)
+   **Windows:** download from the [releases page](https://github.com/ecnivslabs/olive/releases/latest)
 4. Run:
 ```bash
 pit run
